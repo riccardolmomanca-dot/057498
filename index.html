@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GymTrack PWA</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none; }
+        body { -webkit-tap-highlight-color: transparent; }
+        /* Colore Charcoal personalizzato */
+        .bg-charcoal { background-color: #36454F; }
+        .text-charcoal { color: #36454F; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans pb-24">
+
+    <header class="bg-charcoal text-white p-5 shadow-md sticky top-0 z-10 rounded-b-xl">
+        <h1 id="page-title" class="text-xl font-bold text-center tracking-tight">I Miei Allenamenti</h1>
+    </header>
+
+    <main id="app" class="p-4 max-w-md mx-auto">
+        <section id="view-workouts">
+            <div id="workout-list" class="space-y-4"></div>
+            <button onclick="showWorkoutEditor()" class="fixed bottom-28 right-6 bg-charcoal text-white w-16 h-16 rounded-full shadow-2xl text-4xl flex items-center justify-center">+</button>
+        </section>
+
+        <section id="view-editor" class="hidden">
+            <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Nome Allenamento</label>
+                <input type="text" id="edit-workout-name" placeholder="Es. Upper Body" class="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-slate-400 outline-none">
+            </div>
+            
+            <div id="exercise-list" class="space-y-4"></div>
+            
+            <button onclick="addExerciseField()" class="w-full mt-4 bg-white p-3 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 font-medium">+ Aggiungi Esercizio</button>
+            
+            <div class="flex gap-3 mt-8">
+                <button onclick="saveWorkout()" class="flex-1 bg-green-600 text-white p-4 rounded-lg font-bold shadow-md">Salva</button>
+                <button onclick="showView('workouts')" class="flex-1 bg-gray-400 text-white p-4 rounded-lg font-bold shadow-md">Annulla</button>
+            </div>
+        </section>
+
+        <section id="view-active" class="hidden">
+            <h2 id="active-workout-name" class="text-2xl font-bold mb-6 text-charcoal text-center"></h2>
+            <div id="active-exercises" class="space-y-6"></div>
+            <button onclick="finishWorkout()" class="w-full mt-10 bg-green-600 text-white p-5 rounded-xl font-bold shadow-xl uppercase tracking-widest">Termina Allenamento</button>
+        </section>
+
+        <section id="view-calendar" class="hidden">
+            <div id="calendar-grid" class="bg-white p-4 rounded-xl shadow-sm grid grid-cols-7 gap-2 text-center border border-gray-100"></div>
+            <div id="history-detail" class="mt-8 space-y-4"></div>
+        </section>
+    </main>
+
+    <div id="timer-overlay" class="hidden fixed inset-0 bg-slate-900/95 flex flex-col items-center justify-center z-50 text-white">
+        <div class="text-7xl font-mono font-bold mb-2" id="timer-display">00:00</div>
+        <p class="text-slate-400 uppercase tracking-widest mb-10">Recupero...</p>
+        <button onclick="closeTimer()" class="bg-white/10 border border-white/20 px-10 py-3 rounded-full hover:bg-white/20 transition">Salta</button>
+    </div>
+
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        <button onclick="showView('workouts')" class="flex flex-col items-center gap-1 group">
+            <div class="w-12 h-1 rounded-full mb-1 group-hover:bg-charcoal"></div>
+            <span class="text-xs font-bold uppercase tracking-tighter text-gray-400 group-focus:text-charcoal">Workouts</span>
+        </button>
+        <button onclick="showView('calendar')" class="flex flex-col items-center gap-1 group">
+            <div class="w-12 h-1 rounded-full mb-1 group-hover:bg-charcoal"></div>
+            <span class="text-xs font-bold uppercase tracking-tighter text-gray-400 group-focus:text-charcoal">Calendario</span>
+        </button>
+    </nav>
+
+    <script>
+        // --- LOGICA DATI ---
+        let workouts = JSON.parse(localStorage
