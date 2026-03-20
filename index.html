@@ -7,15 +7,17 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .hidden { display: none; }
-        .active-tab { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
+        .hidden { display: none !important; }
         body { -webkit-tap-highlight-color: transparent; }
+        .bg-charcoal { background-color: #36454F; }
+        .text-charcoal { color: #36454F; }
+        .nav-active { border-top: 3px solid #36454F; color: #36454F !important; }
     </style>
 </head>
-<body class="bg-gray-100 font-sans pb-20">
+<body class="bg-gray-100 font-sans pb-24">
 
-    <header class="bg-blue-600 text-white p-4 shadow-lg sticky top-0 z-10">
-        <h1 id="page-title" class="text-xl font-bold text-center">I Miei Allenamenti</h1>
+    <header class="bg-charcoal text-white p-5 shadow-md sticky top-0 z-10 rounded-b-xl">
+        <h1 id="page-title" class="text-xl font-bold text-center tracking-tight">I Miei Allenamenti</h1>
     </header>
 
     <main id="app" class="p-4 max-w-md mx-auto">
