@@ -1,357 +1,782 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GymTrack PWA</title>
-    <link rel="manifest" href="manifest.json">
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GymTrack — Minimal Premium</title>
 
-    <style>
-        .hidden { display: none !important; }
-        body { -webkit-tap-highlight-color: transparent; }
-        .bg-charcoal { background-color: #36454F; }
-        .text-charcoal { color: #36454F; }
-    </style>
+  <!-- Inter font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+  <meta name="theme-color" content="#ffffff">
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card:#ffffff;
+      --muted:#6b7280;
+      --text:#111827;
+      --accent:#1c1c1e; /* carbone */
+      --accent-strong:#111111;
+      --success:#10b981;
+      --glass: rgba(255,255,255,0.6);
+      --radius:14px;
+      --shadow: 0 6px 18px rgba(17,24,39,0.06);
+      --border: 1px solid rgba(17,24,39,0.06);
+    }
+
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background:var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      -webkit-tap-highlight-color:transparent;
+      padding-bottom:84px; /* space for nav */
+    }
+
+    /* Container */
+    .wrap{max-width:820px;margin:28px auto;padding:20px;}
+
+    header.appbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:18px 20px;
+      border-radius:16px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.6));
+      box-shadow:var(--shadow);
+      border:var(--border);
+      position:sticky;
+      top:14px;
+      z-index:20;
+    }
+    .brand{
+      display:flex;align-items:center;gap:12px;
+    }
+    .logo{
+      width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#f8fafc,#eef2f7);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent-strong);box-shadow:0 2px 6px rgba(17,24,39,0.04);
+    }
+    h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-0.2px}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+
+    /* Views */
+    section.view{display:none}
+    section.view.active{display:block}
+
+    /* Workouts list */
+    .list{display:grid;gap:12px}
+    .card{
+      background:var(--card);
+      border-radius:12px;
+      padding:14px;
+      border:var(--border);
+      box-shadow:none;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+    }
+    .card .meta{display:flex;flex-direction:column}
+    .card h3{margin:0;font-size:15px}
+    .card p{margin:0;color:var(--muted);font-size:13px}
+
+    .btn{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 12px;border-radius:10px;border:none;cursor:pointer;font-weight:600;font-size:13px;
+    }
+    .btn-solid{background:var(--accent-strong);color:#fff;box-shadow:0 6px 18px rgba(17,24,39,0.06)}
+    .btn-outline{background:transparent;border:1px solid rgba(17,24,39,0.06);color:var(--accent-strong)}
+    .btn-ghost{background:transparent;color:var(--muted);border-radius:8px;padding:6px 8px}
+
+    .fab{
+      position:fixed;right:22px;bottom:96px;width:64px;height:64px;border-radius:16px;background:var(--accent-strong);color:#fff;font-size:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(17,24,39,0.12);border:none;cursor:pointer;
+    }
+
+    /* Editor */
+    .editor{display:grid;gap:12px}
+    .field{background:var(--card);padding:12px;border-radius:12px;border:var(--border);display:flex;flex-direction:column;gap:8px}
+    .field input[type="text"], .field input[type="number"], .field select{
+      padding:10px;border-radius:10px;border:1px solid rgba(17,24,39,0.06);font-size:14px;
+    }
+    .exercise-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+    .small{font-size:13px;color:var(--muted)}
+
+    /* Active workout */
+    .exercise-card{border:var(--border);padding:12px;border-radius:12px;background:var(--card)}
+    .sets-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .set-row{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:8px;border-radius:10px;border:1px solid rgba(17,24,39,0.03)}
+    .set-controls{display:flex;gap:8px;align-items:center}
+    .input-sm{width:84px;padding:8px;border-radius:8px;border:1px solid rgba(17,24,39,0.06);text-align:center}
+
+    /* Timer overlay */
+    #timer-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:60;background:rgba(17,24,39,0.6);backdrop-filter:blur(6px);color:#fff;flex-direction:column}
+    #timer-display{font-family:monospace;font-size:72px;font-weight:700}
+
+    /* Calendar */
+    .calendar-controls{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+    .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+    .day{
+      padding:12px;border-radius:10px;text-align:center;border:var(--border);background:#f8fafc;color:var(--muted);cursor:default;
+    }
+    .day.has{background:linear-gradient(180deg,var(--success),#34d399);color:#fff;font-weight:700;cursor:pointer}
+    .history-detail{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+    .session-card{background:var(--card);padding:12px;border-radius:12px;border:var(--border);display:flex;flex-direction:column;gap:8px}
+    .session-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+
+    /* Nav (iOS style with blur) */
+    nav.bottom{
+      position:fixed;left:50%;transform:translateX(-50%);bottom:18px;width:calc(100% - 40px);max-width:820px;border-radius:18px;padding:8px 12px;display:flex;justify-content:space-around;align-items:center;gap:6px;background:rgba(255,255,255,0.6);backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(17,24,39,0.08);border:1px solid rgba(17,24,39,0.04);z-index:50;
+    }
+    .tab{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 12px;border-radius:12px;color:var(--muted);font-size:12px;cursor:pointer}
+    .tab.active{color:var(--accent-strong);background:rgba(17,24,39,0.03)}
+
+    /* small helpers */
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:8px;align-items:center}
+    .divider{height:1px;background:rgba(17,24,39,0.03);margin:8px 0;border-radius:2px}
+    .danger{color:#ef4444}
+    .hidden{display:none}
+    @media (max-width:520px){
+      .wrap{padding:14px;margin:12px}
+      .fab{right:16px;bottom:110px}
+    }
+  </style>
 </head>
+<body>
 
-<body class="bg-gray-100 font-sans pb-24">
+  <div class="wrap">
+    <header class="appbar" role="banner">
+      <div class="brand">
+        <div class="logo">GT</div>
+        <div>
+          <h1>GymTrack</h1>
+          <p class="lead">I tuoi allenamenti — minimal & premium</p>
+        </div>
+      </div>
 
-<header class="bg-charcoal text-white p-5 shadow-md sticky top-0 z-10 rounded-b-xl">
-    <h1 id="page-title" class="text-xl font-bold text-center tracking-tight">I Miei Allenamenti</h1>
-</header>
+      <div class="row">
+        <button class="btn btn-outline" onclick="showView('workouts')">Home</button>
+        <button class="btn btn-ghost" onclick="showView('calendar')">Calendario</button>
+      </div>
+    </header>
 
-<main id="app" class="p-4 max-w-md mx-auto">
+    <!-- WORKOUTS VIEW -->
+    <section id="view-workouts" class="view active">
+      <div style="margin-top:18px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h2 style="margin:0">I miei workout</h2>
+          <p class="small muted" style="margin-top:6px">Template salvati — la cronologia resta separata</p>
+        </div>
+      </div>
 
-    <!-- LISTA ALLENAMENTI -->
-    <section id="view-workouts">
-        <div id="workout-list" class="space-y-4"></div>
-        <button onclick="showWorkoutEditor()" class="fixed bottom-28 right-6 bg-charcoal text-white w-16 h-16 rounded-full shadow-2xl text-4xl flex items-center justify-center">+</button>
+      <div class="list" id="workout-list" style="margin-top:12px"></div>
+
+      <button class="fab" title="Nuovo workout" onclick="showWorkoutEditor()">
+        +
+      </button>
     </section>
 
-    <!-- EDITOR ALLENAMENTO -->
-    <section id="view-editor" class="hidden">
-        <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
-            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Nome Allenamento</label>
-            <input type="text" id="edit-workout-name" placeholder="Es. Upper Body" class="w-full p-3 rounded-lg border border-gray-200">
+    <!-- EDITOR VIEW -->
+    <section id="view-editor" class="view">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div>
+          <h2 id="editor-title" style="margin:0">Nuovo workout</h2>
+          <p class="small muted" style="margin-top:6px">Definisci esercizi, serie e target</p>
+        </div>
+        <div class="row">
+          <button class="btn btn-outline" onclick="showView('workouts')">Annulla</button>
+          <button class="btn btn-solid" onclick="saveWorkout()">Salva</button>
+        </div>
+      </div>
+
+      <div class="editor">
+        <div class="field">
+          <label class="small">Nome allenamento</label>
+          <input id="edit-workout-name" type="text" placeholder="Es. Upper Body">
         </div>
 
-        <div id="exercise-list" class="space-y-4"></div>
+        <div id="exercise-list" style="display:grid;gap:10px"></div>
 
-        <button onclick="addExerciseField()" class="w-full mt-4 bg-white p-3 rounded-lg border-2 border-dashed border-gray-300 text-gray-500 font-medium">+ Aggiungi Esercizio</button>
-
-        <div class="flex gap-3 mt-8">
-            <button onclick="saveWorkout()" class="flex-1 bg-green-600 text-white p-4 rounded-lg font-bold shadow-md">Salva</button>
-            <button onclick="showView('workouts')" class="flex-1 bg-gray-400 text-white p-4 rounded-lg font-bold shadow-md">Annulla</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="addExerciseField()">+ Aggiungi esercizio</button>
+          <button class="btn btn-ghost" onclick="duplicateSelected()">Duplica ultimo</button>
         </div>
+      </div>
     </section>
 
-    <!-- ESECUZIONE ALLENAMENTO -->
-    <section id="view-active" class="hidden">
-        <h2 id="active-workout-name" class="text-2xl font-bold mb-6 text-charcoal text-center"></h2>
-        <div id="active-exercises" class="space-y-6"></div>
-        <button onclick="finishWorkout()" class="w-full mt-10 bg-green-600 text-white p-5 rounded-xl font-bold shadow-xl uppercase tracking-widest">Termina Allenamento</button>
-    </section>
-
-    <!-- CALENDARIO -->
-    <section id="view-calendar" class="hidden">
-        <div class="flex justify-between items-center mb-4">
-            <select id="calendar-month" class="p-2 border rounded"></select>
-            <select id="calendar-year" class="p-2 border rounded"></select>
-            <button onclick="renderCalendar()" class="bg-charcoal text-white px-4 py-2 rounded">Vai</button>
+    <!-- ACTIVE WORKOUT VIEW -->
+    <section id="view-active" class="view">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h2 id="active-workout-name" style="margin:0">Allenamento</h2>
+          <p class="small muted" id="active-date" style="margin-top:6px"></p>
         </div>
+        <div class="row">
+          <button class="btn btn-outline" onclick="cancelActive()">Annulla</button>
+          <button class="btn btn-solid" onclick="finishWorkout()">Termina</button>
+        </div>
+      </div>
 
-        <div id="calendar-grid" class="bg-white p-4 rounded-xl shadow-sm grid grid-cols-7 gap-2 text-center border border-gray-100"></div>
-        <div id="history-detail" class="mt-8 space-y-4"></div>
+      <div id="active-exercises" style="margin-top:14px;display:grid;gap:12px"></div>
     </section>
 
-</main>
+    <!-- CALENDAR VIEW -->
+    <section id="view-calendar" class="view">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h2 style="margin:0">Calendario</h2>
+          <p class="small muted" style="margin-top:6px">Seleziona un giorno per vedere le sessioni</p>
+        </div>
+        <div class="calendar-controls">
+          <select id="calendar-month"></select>
+          <select id="calendar-year"></select>
+          <button class="btn btn-solid" onclick="renderCalendar()">Vai</button>
+        </div>
+      </div>
 
-<!-- TIMER -->
-<div id="timer-overlay" class="hidden fixed inset-0 bg-slate-900/95 flex flex-col items-center justify-center z-50 text-white">
-    <div class="text-7xl font-mono font-bold mb-2" id="timer-display">00:00</div>
-    <p class="text-slate-400 uppercase tracking-widest mb-10">Recupero...</p>
-    <button onclick="closeTimer()" class="bg-white/10 border border-white/20 px-10 py-3 rounded-full hover:bg-white/20 transition">Salta</button>
-</div>
+      <div class="calendar-grid" id="calendar-grid" style="margin-top:12px"></div>
 
-<!-- NAV -->
-<nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-    <button onclick="showView('workouts')" class="flex flex-col items-center gap-1 group">
-        <span class="text-xs font-bold uppercase tracking-tighter text-gray-400">Workouts</span>
-    </button>
-    <button onclick="showView('calendar')" class="flex flex-col items-center gap-1 group">
-        <span class="text-xs font-bold uppercase tracking-tighter text-gray-400">Calendario</span>
-    </button>
-</nav>
+      <div id="history-detail" class="history-detail"></div>
+    </section>
+  </div>
+
+  <!-- Timer overlay -->
+  <div id="timer-overlay">
+    <div id="timer-display">00:00</div>
+    <div class="small muted" style="margin-bottom:18px">Recupero</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-outline" onclick="closeTimer()">Chiudi</button>
+      <button class="btn btn-solid" onclick="skipTimer()">Salta</button>
+    </div>
+  </div>
+
+  <!-- Bottom nav (iOS style blur) -->
+  <nav class="bottom" role="navigation" aria-label="Tab bar">
+    <div class="tab active" id="tab-workouts" onclick="showView('workouts'); setActiveTab('workouts')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M6 2v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 2v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="8" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+      <div>Workouts</div>
+    </div>
+    <div class="tab" id="tab-calendar" onclick="showView('calendar'); setActiveTab('calendar')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <div>Calendario</div>
+    </div>
+  </nav>
 
 <script>
-// --- DATI ---
+/* -------------------------
+   Data model (localStorage)
+   ------------------------- */
 let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
 let history = JSON.parse(localStorage.getItem('history')) || [];
 let currentWorkout = null;
-let timerInterval;
+let editingIndex = null;
+let timerInterval = null;
 
-const beep = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-
-function saveData() {
-    localStorage.setItem('workouts', JSON.stringify(workouts));
-    localStorage.setItem('history', JSON.stringify(history));
+/* Utility */
+function saveData(){
+  localStorage.setItem('workouts', JSON.stringify(workouts));
+  localStorage.setItem('history', JSON.stringify(history));
 }
 
-// --- NAVIGAZIONE ---
-function showView(view) {
-    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-    document.getElementById(`view-${view}`).classList.remove('hidden');
-    if(view === 'workouts') renderWorkouts();
-    if(view === 'calendar') renderCalendar();
+/* -------------------------
+   UI helpers
+   ------------------------- */
+function showView(name){
+  document.querySelectorAll('section.view').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('view-' + name);
+  if(el) el.classList.add('active');
+
+  // render relevant content
+  if(name === 'workouts') renderWorkouts();
+  if(name === 'calendar') renderCalendar();
+  if(name === 'active') renderActiveExercises();
 }
 
-// --- WORKOUT LIST ---
-function renderWorkouts() {
-    const list = document.getElementById('workout-list');
-    list.innerHTML = workouts.map((w, i) => `
-        <div class="bg-white p-4 rounded shadow flex justify-between items-center">
-            <div>
-                <h3 class="font-bold text-lg">${w.name}</h3>
-                <p class="text-sm text-gray-500">${w.exercises.length} esercizi</p>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="startWorkout(${i})" class="bg-green-500 text-white p-2 rounded text-sm">Inizia</button>
-                <button onclick="showWorkoutEditor(${i})" class="bg-blue-100 text-blue-600 p-2 rounded text-sm">Modifica</button>
-                <button onclick="deleteWorkout(${i})" class="bg-red-100 text-red-600 p-2 rounded text-sm">Elimina</button>
-            </div>
+function setActiveTab(name){
+  document.querySelectorAll('nav.bottom .tab').forEach(t => t.classList.remove('active'));
+  const t = document.getElementById('tab-' + name);
+  if(t) t.classList.add('active');
+}
+
+/* -------------------------
+   Workouts list
+   ------------------------- */
+function renderWorkouts(){
+  const list = document.getElementById('workout-list');
+  if(workouts.length === 0){
+    list.innerHTML = `<div class="card"><div><h3 style="margin:0">Nessun workout</h3><p class="small muted" style="margin-top:6px">Crea il tuo primo template</p></div></div>`;
+    return;
+  }
+
+  list.innerHTML = workouts.map((w,i) => {
+    const exCount = w.exercises?.length || 0;
+    return `
+      <div class="card">
+        <div class="meta">
+          <h3>${escapeHtml(w.name || 'Untitled')}</h3>
+          <p class="small muted">${exCount} esercizi</p>
         </div>
-    `).join('');
-}
-
-// --- EDITOR ---
-function showWorkoutEditor(index = null) {
-    showView('editor');
-    const nameInput = document.getElementById('edit-workout-name');
-    const list = document.getElementById('exercise-list');
-    list.innerHTML = '';
-    
-    if(index !== null) {
-        currentWorkout = { ...workouts[index], index };
-        nameInput.value = currentWorkout.name;
-        currentWorkout.exercises.forEach(ex => addExerciseField(ex));
-    } else {
-        currentWorkout = { name: '', exercises: [], index: null };
-        nameInput.value = '';
-        addExerciseField();
-    }
-}
-
-function addExerciseField(data = { name: '', sets: 3, reps: 10, rest: 60 }) {
-    const div = document.createElement('div');
-    div.className = "bg-white p-4 rounded border relative exercise-entry";
-    div.innerHTML = `
-        <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-500 text-xl">&times;</button>
-        <input type="text" placeholder="Nome Esercizio" class="ex-name w-full mb-2 font-bold border-b" value="${data.name}">
-        <div class="grid grid-cols-2 gap-2 text-sm">
-            <label>Serie: <input type="number" class="ex-sets w-16 p-1 border rounded" value="${data.sets}"></label>
-            <label>Reps target: <input type="number" class="ex-reps w-16 p-1 border rounded" value="${data.reps}"></label>
-            <label>Recupero (sec): <input type="number" class="ex-rest w-16 p-1 border rounded" value="${data.rest}"></label>
+        <div class="row">
+          <button class="btn btn-outline" onclick="showWorkoutEditor(${i})">Modifica</button>
+          <button class="btn btn-ghost" onclick="startWorkout(${i})">Inizia</button>
+          <button class="btn btn-ghost danger" onclick="deleteWorkout(${i})">Elimina</button>
         </div>
+      </div>
     `;
-    document.getElementById('exercise-list').appendChild(div);
+  }).join('');
 }
 
-function saveWorkout() {
-    const name = document.getElementById('edit-workout-name').value;
-    const exercises = Array.from(document.querySelectorAll('.exercise-entry')).map(el => {
-        const sets = parseInt(el.querySelector('.ex-sets').value);
-        const repsTarget = parseInt(el.querySelector('.ex-reps').value);
-        return {
-            name: el.querySelector('.ex-name').value,
-            rest: parseInt(el.querySelector('.ex-rest').value),
-            sets: Array.from({ length: sets }, () => ({
-                weight: 0,
-                repsTarget,
-                repsDone: 0
-            }))
-        };
-    });
-
-    const newWorkout = { name, exercises };
-    if(currentWorkout.index !== null) workouts[currentWorkout.index] = newWorkout;
-    else workouts.push(newWorkout);
-    
-    saveData();
-    showView('workouts');
+/* Delete workout template (only template; history untouched) */
+function deleteWorkout(index){
+  if(!Number.isInteger(index) || index < 0 || index >= workouts.length) return;
+  const name = workouts[index].name || 'Questo workout';
+  if(!confirm(`Eliminare il template "${name}"? La cronologia non verrà toccata.`)) return;
+  workouts.splice(index,1);
+  saveData();
+  renderWorkouts();
 }
 
-// --- ESECUZIONE ---
-function startWorkout(index) {
-    currentWorkout = JSON.parse(JSON.stringify(workouts[index]));
-    showView('active');
-    document.getElementById('active-workout-name').innerText = currentWorkout.name;
-    renderActiveExercises();
+/* -------------------------
+   Editor
+   ------------------------- */
+function showWorkoutEditor(index = null){
+  editingIndex = (index === null) ? null : index;
+  document.getElementById('editor-title').innerText = index === null ? 'Nuovo workout' : 'Modifica workout';
+  showView('editor');
+  const nameInput = document.getElementById('edit-workout-name');
+  const list = document.getElementById('exercise-list');
+  list.innerHTML = '';
+
+  if(index !== null){
+    const w = workouts[index];
+    nameInput.value = w.name || '';
+    (w.exercises || []).forEach(ex => addExerciseField(ex));
+  } else {
+    nameInput.value = '';
+    addExerciseField();
+  }
 }
 
-function renderActiveExercises() {
-    const container = document.getElementById('active-exercises');
-    container.innerHTML = currentWorkout.exercises.map((ex, exIdx) => `
-        <div class="bg-white p-4 rounded shadow">
-            <h3 class="font-bold text-blue-600 mb-2">${ex.name} (${ex.rest}s rec)</h3>
-            <div class="space-y-2">
-                ${ex.sets.map((set, sIdx) => `
-                    <div class="p-2 border-b last:border-0" id="set-${exIdx}-${sIdx}">
-                        <div class="flex justify-between items-center mb-2">
-                            <span>Serie ${sIdx + 1}</span>
-                        </div>
-
-                        <div class="flex items-center gap-2 mb-2">
-                            <input type="number" value="${set.weight}" 
-                                onchange="currentWorkout.exercises[${exIdx}].sets[${sIdx}].weight = Number(this.value)"
-                                class="w-16 p-1 border rounded text-center"> kg
-
-                            <input type="number" value="${set.repsDone}" 
-                                onchange="currentWorkout.exercises[${exIdx}].sets[${sIdx}].repsDone = Number(this.value)"
-                                class="w-16 p-1 border rounded text-center"> reps
-                        </div>
-
-                        <button onclick="completeSet(${exIdx}, ${sIdx}, ${ex.rest})" 
-                            class="set-btn bg-gray-200 p-2 rounded w-full">✓ Completa serie</button>
-                    </div>
-                `).join('')}
-            </div>
+/* Add exercise field in editor
+   data: { name, sets, reps, rest, weightTarget }
+*/
+function addExerciseField(data = { name:'', sets:3, reps:10, rest:60, weightTarget:0 }){
+  const list = document.getElementById('exercise-list');
+  const div = document.createElement('div');
+  div.className = 'field';
+  div.innerHTML = `
+    <div class="exercise-row">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <input class="ex-name" type="text" placeholder="Nome esercizio" value="${escapeHtml(data.name)}">
+        <div style="display:flex;gap:8px;align-items:center">
+          <label class="small">Serie <input class="ex-sets" type="number" min="1" value="${data.sets}" style="width:72px;margin-left:6px"></label>
+          <label class="small">Reps target <input class="ex-reps" type="number" min="1" value="${data.reps}" style="width:72px;margin-left:6px"></label>
+          <label class="small">Recupero (s) <input class="ex-rest" type="number" min="0" value="${data.rest}" style="width:72px;margin-left:6px"></label>
+          <label class="small">Peso target (kg) <input class="ex-weight-target" type="number" min="0" value="${data.weightTarget}" style="width:90px;margin-left:6px"></label>
         </div>
-    `).join('');
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+        <button class="btn btn-outline" onclick="this.closest('.field').remove()">Rimuovi</button>
+        <button class="btn btn-ghost" onclick="duplicateExercise(this)">Duplica</button>
+      </div>
+    </div>
+  `;
+  list.appendChild(div);
 }
 
-function completeSet(exIdx, sIdx, rest) {
-    const set = currentWorkout.exercises[exIdx].sets[sIdx];
-
-    if(set.repsDone <= 0) {
-        alert("Inserisci le ripetizioni effettive prima di completare la serie.");
-        return;
-    }
-
-    const btn = document.querySelector(`#set-${exIdx}-${sIdx} .set-btn`);
-    btn.classList.replace('bg-gray-200', 'bg-green-500');
-    btn.classList.add('text-white');
-    btn.disabled = true;
-
-    startTimer(rest);
+function duplicateExercise(btn){
+  const field = btn.closest('.field');
+  if(!field) return;
+  const name = field.querySelector('.ex-name').value;
+  const sets = Number(field.querySelector('.ex-sets').value) || 3;
+  const reps = Number(field.querySelector('.ex-reps').value) || 10;
+  const rest = Number(field.querySelector('.ex-rest').value) || 60;
+  const weightTarget = Number(field.querySelector('.ex-weight-target').value) || 0;
+  addExerciseField({ name, sets, reps, rest, weightTarget });
 }
 
-// --- TIMER mm:ss ---
-function startTimer(seconds) {
-    const overlay = document.getElementById('timer-overlay');
-    const display = document.getElementById('timer-display');
-    overlay.classList.remove('hidden');
-    
-    let timeLeft = seconds;
-    updateTimerDisplay(timeLeft);
+function duplicateSelected(){
+  const list = document.getElementById('exercise-list');
+  const last = list.querySelector('.field:last-child');
+  if(!last) return addExerciseField();
+  const name = last.querySelector('.ex-name').value;
+  const sets = Number(last.querySelector('.ex-sets').value) || 3;
+  const reps = Number(last.querySelector('.ex-reps').value) || 10;
+  const rest = Number(last.querySelector('.ex-rest').value) || 60;
+  const weightTarget = Number(last.querySelector('.ex-weight-target').value) || 0;
+  addExerciseField({ name, sets, reps, rest, weightTarget });
+}
 
-    timerInterval = setInterval(() => {
-        timeLeft--;
-        updateTimerDisplay(timeLeft);
+/* Save workout template */
+function saveWorkout(){
+  const name = document.getElementById('edit-workout-name').value.trim() || 'Untitled';
+  const exercises = Array.from(document.querySelectorAll('#exercise-list .field')).map(f => {
+    const exName = f.querySelector('.ex-name').value.trim() || 'Esercizio';
+    const setsCount = Math.max(1, Number(f.querySelector('.ex-sets').value) || 3);
+    const repsTarget = Math.max(1, Number(f.querySelector('.ex-reps').value) || 10);
+    const rest = Math.max(0, Number(f.querySelector('.ex-rest').value) || 60);
+    const weightTarget = Math.max(0, Number(f.querySelector('.ex-weight-target').value) || 0);
 
-        if(timeLeft <= 0) {
-            clearInterval(timerInterval);
-            beep.play().catch(() => {});
-            closeTimer();
+    return {
+      name: exName,
+      rest,
+      exercisesMeta: { weightTarget }, // meta for future
+      sets: Array.from({length: setsCount}).map(() => ({
+        weight: weightTarget || 0,
+        repsTarget,
+        repsDone: 0
+      }))
+    };
+  });
+
+  const newWorkout = { name, exercises };
+  if(editingIndex !== null && Number.isInteger(editingIndex) && editingIndex >= 0 && editingIndex < workouts.length){
+    workouts[editingIndex] = newWorkout;
+  } else {
+    workouts.push(newWorkout);
+  }
+  saveData();
+  showView('workouts');
+}
+
+/* -------------------------
+   Start / Active workout
+   ------------------------- */
+
+/* Helper: find last weight used for an exercise (case-insensitive)
+   Returns number or null
+*/
+function getLastWeightForExercise(exName){
+  if(!exName) return null;
+  const target = exName.trim().toLowerCase();
+  for(let i = history.length - 1; i >= 0; i--){
+    const session = history[i];
+    if(!session || !session.exercises) continue;
+    for(let j = session.exercises.length - 1; j >= 0; j--){
+      const ex = session.exercises[j];
+      if(!ex || !ex.name) continue;
+      if(ex.name.trim().toLowerCase() === target){
+        // find last non-zero weight in sets
+        if(Array.isArray(ex.sets)){
+          for(let k = ex.sets.length - 1; k >= 0; k--){
+            const s = ex.sets[k];
+            if(s && typeof s.weight === 'number' && s.weight > 0) return s.weight;
+          }
         }
-    }, 1000);
-}
-
-function updateTimerDisplay(sec) {
-    const m = String(Math.floor(sec / 60)).padStart(2, '0');
-    const s = String(sec % 60).padStart(2, '0');
-    document.getElementById('timer-display').innerText = `${m}:${s}`;
-}
-
-function closeTimer() {
-    clearInterval(timerInterval);
-    document.getElementById('timer-overlay').classList.add('hidden');
-}
-
-function finishWorkout() {
-    history.push({
-        name: currentWorkout.name,
-        date: new Date().toISOString().split('T')[0],
-        exercises: currentWorkout.exercises
-    });
-
-    saveData();
-    alert("Allenamento completato e salvato!");
-    showView('workouts');
-}
-
-// --- CALENDARIO ---
-function populateCalendarSelectors() {
-    const monthSel = document.getElementById('calendar-month');
-    const yearSel = document.getElementById('calendar-year');
-
-    monthSel.innerHTML = [...Array(12).keys()].map(m => 
-        `<option value="${m+1}">${m+1}</option>`
-    ).join('');
-
-    const currentYear = new Date().getFullYear();
-    yearSel.innerHTML = [...Array(5).keys()].map(i => 
-        `<option value="${currentYear - 2 + i}">${currentYear - 2 + i}</option>`
-    ).join('');
-
-    monthSel.value = new Date().getMonth() + 1;
-    yearSel.value = currentYear;
-}
-
-function renderCalendar() {
-    const month = parseInt(document.getElementById('calendar-month').value);
-    const year = parseInt(document.getElementById('calendar-year').value);
-
-    const grid = document.getElementById('calendar-grid');
-    const detail = document.getElementById('history-detail');
-    grid.innerHTML = '';
-    detail.innerHTML = '';
-
-    const daysInMonth = new Date(year, month, 0).getDate();
-
-    for (let i = 1; i <= daysInMonth; i++) {
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-        const hasWorkout = history.some(h => h.date === dateStr);
-
-        const dayEl = document.createElement('div');
-        dayEl.className = `p-2 rounded text-sm ${hasWorkout ? 'bg-green-500 text-white font-bold cursor-pointer' : 'bg-gray-200'}`;
-        dayEl.innerText = i;
-
-        if(hasWorkout) dayEl.onclick = () => showHistoryDetail(dateStr);
-
-        grid.appendChild(dayEl);
+      }
     }
+  }
+  return null;
 }
 
-function showHistoryDetail(date) {
-    const sessions = history.filter(h => h.date === date);
-    const detail = document.getElementById('history-detail');
-
-    detail.innerHTML = `<h3 class="font-bold border-b pb-2">Allenamenti del ${date}</h3>`;
-
-    sessions.forEach(s => {
-        detail.innerHTML += `
-            <div class="bg-white p-3 rounded shadow-sm text-sm">
-                <p class="font-bold">${s.name}</p>
-                ${s.exercises.map(ex => `
-                    <p class="text-xs mt-2 font-semibold">${ex.name}</p>
-                    ${ex.sets.map(set => `
-                        <p class="text-xs ml-2">• ${set.weight}kg x ${set.repsDone} reps</p>
-                    `).join('')}
-                `).join('')}
-            </div>
-        `;
+/* Start workout: prepare currentWorkout with initial weights from history or target */
+function startWorkout(index){
+  if(!Number.isInteger(index) || index < 0 || index >= workouts.length) return;
+  // deep clone template
+  currentWorkout = JSON.parse(JSON.stringify(workouts[index]));
+  // for each exercise, determine initial weight
+  currentWorkout.exercises.forEach(ex => {
+    const last = getLastWeightForExercise(ex.name);
+    const fallback = (ex.exercisesMeta && ex.exercisesMeta.weightTarget) ? ex.exercisesMeta.weightTarget : 0;
+    const initialWeight = (last !== null) ? last : fallback;
+    ex.sets.forEach(s => {
+      s.weight = initialWeight || 0; // show last or target or 0
+      s.repsDone = 0; // start fresh
+      s.completed = false;
     });
+  });
+
+  // set UI
+  document.getElementById('active-workout-name').innerText = currentWorkout.name || 'Allenamento';
+  document.getElementById('active-date').innerText = new Date().toLocaleString();
+  showView('active');
+  setActiveTab('workouts');
+  renderActiveExercises();
 }
 
-// INIT
-populateCalendarSelectors();
-renderWorkouts();
-</script>
+/* Render active workout exercises */
+function renderActiveExercises(){
+  const container = document.getElementById('active-exercises');
+  if(!currentWorkout) { container.innerHTML = '<p class="small muted">Nessun allenamento attivo</p>'; return; }
 
-<script>
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
+  container.innerHTML = currentWorkout.exercises.map((ex, exIdx) => {
+    return `
+      <div class="exercise-card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:700">${escapeHtml(ex.name)}</div>
+            <div class="small muted">${ex.sets.length} serie • ${ex.rest}s recupero</div>
+          </div>
+          <div class="small muted">Target: ${ex.sets[0]?.repsTarget || 0} reps</div>
+        </div>
+
+        <div class="sets-list">
+          ${ex.sets.map((s, sIdx) => `
+            <div class="set-row" id="set-${exIdx}-${sIdx}">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="small muted">Serie ${sIdx+1}</div>
+              </div>
+
+              <div class="set-controls">
+                <input type="number" class="input-sm" value="${s.weight}" onchange="updateSetWeight(${exIdx},${sIdx},this.value)" aria-label="Peso serie">
+                <input type="number" class="input-sm" value="${s.repsDone}" onchange="updateSetReps(${exIdx},${sIdx},this.value)" aria-label="Reps fatte">
+                <button class="btn ${s.completed ? 'btn-outline' : 'btn-solid'}" onclick="completeSet(${exIdx},${sIdx},${currentWorkout.exercises[exIdx].rest})" ${s.completed ? 'disabled' : ''}>${s.completed ? 'Completata' : '✓'}</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateSetWeight(exIdx, sIdx, val){
+  const n = Number(val) || 0;
+  currentWorkout.exercises[exIdx].sets[sIdx].weight = n;
+}
+
+function updateSetReps(exIdx, sIdx, val){
+  const n = Number(val) || 0;
+  currentWorkout.exercises[exIdx].sets[sIdx].repsDone = n;
+}
+
+/* Complete set: require repsDone > 0 */
+function completeSet(exIdx, sIdx, rest){
+  const set = currentWorkout.exercises[exIdx].sets[sIdx];
+  if(!set) return;
+  if(Number(set.repsDone) <= 0){
+    alert('Inserisci le ripetizioni effettive prima di completare la serie.');
+    return;
+  }
+  set.completed = true;
+  renderActiveExercises();
+  startTimer(rest);
+}
+
+/* Cancel active workout */
+function cancelActive(){
+  if(!confirm('Annullare l\'allenamento in corso? I progressi non salvati andranno persi.')) return;
+  currentWorkout = null;
+  showView('workouts');
+}
+
+/* Finish workout: push to history (single session) */
+function finishWorkout(){
+  if(!currentWorkout) return;
+  const session = {
+    name: currentWorkout.name || 'Sessione',
+    date: new Date().toISOString().split('T')[0],
+    time: new Date().toISOString(),
+    exercises: currentWorkout.exercises
+  };
+  history.push(session);
+  saveData();
+  alert('Allenamento salvato nella cronologia.');
+  currentWorkout = null;
+  showView('workouts');
+}
+
+/* -------------------------
+   Timer mm:ss
+   ------------------------- */
+function startTimer(seconds){
+  if(timerInterval) clearInterval(timerInterval);
+  const overlay = document.getElementById('timer-overlay');
+  const display = document.getElementById('timer-display');
+  let timeLeft = Math.max(0, Number(seconds) || 0);
+  updateTimerDisplay(timeLeft);
+  overlay.style.display = 'flex';
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay(timeLeft);
+    if(timeLeft <= 0){
+      clearInterval(timerInterval);
+      timerInterval = null;
+      // small beep using WebAudio if available
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = 880;
+        g.gain.value = 0.02;
+        o.connect(g); g.connect(ctx.destination);
+        o.start();
+        setTimeout(()=>{ o.stop(); ctx.close(); }, 220);
+      } catch(e){}
+      overlay.style.display = 'none';
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay(sec){
+  const m = String(Math.floor(sec/60)).padStart(2,'0');
+  const s = String(sec%60).padStart(2,'0');
+  document.getElementById('timer-display').innerText = `${m}:${s}`;
+}
+
+function closeTimer(){
+  if(timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+  document.getElementById('timer-overlay').style.display = 'none';
+}
+function skipTimer(){ closeTimer(); }
+
+/* -------------------------
+   Calendar & History
+   ------------------------- */
+function populateCalendarSelectors(){
+  const monthSel = document.getElementById('calendar-month');
+  const yearSel = document.getElementById('calendar-year');
+  monthSel.innerHTML = Array.from({length:12}).map((_,i)=>`<option value="${i+1}">${i+1}</option>`).join('');
+  const currentYear = new Date().getFullYear();
+  yearSel.innerHTML = Array.from({length:5}).map((_,i)=>`<option value="${currentYear-2+i}">${currentYear-2+i}</option>`).join('');
+  monthSel.value = new Date().getMonth()+1;
+  yearSel.value = currentYear;
+}
+
+function renderCalendar(){
+  const month = Number(document.getElementById('calendar-month').value);
+  const year = Number(document.getElementById('calendar-year').value);
+  const grid = document.getElementById('calendar-grid');
+  const detail = document.getElementById('history-detail');
+  grid.innerHTML = '';
+  detail.innerHTML = '';
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const has = history.some(h => h.date === dateStr);
+    const div = document.createElement('div');
+    div.className = 'day' + (has ? ' has' : '');
+    div.innerText = d;
+    if(has){
+      div.onclick = () => showHistoryDetail(dateStr);
+    }
+    grid.appendChild(div);
+  }
+}
+
+/* Show sessions for a date with delete button next to each session */
+function showHistoryDetail(date){
+  const sessions = history.map((h, idx) => ({...h, _idx: idx})).filter(h => h.date === date);
+  const detail = document.getElementById('history-detail');
+  detail.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">Allenamenti del ${date}</h3><button class="btn btn-outline" onclick="clearHistoryForDate('${date}')">Elimina tutti</button></div>`;
+
+  if(sessions.length === 0){
+    detail.innerHTML += `<p class="small muted">Nessuna sessione</p>`;
+    return;
+  }
+
+  sessions.forEach(s => {
+    const html = document.createElement('div');
+    html.className = 'session-card';
+    html.innerHTML = `
+      <div class="session-head">
+        <div>
+          <div style="font-weight:700">${escapeHtml(s.name)}</div>
+          <div class="small muted">${new Date(s.time || s.date).toLocaleString()}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-outline" onclick="replaySession(${s._idx})">Riprova</button>
+          <button class="btn btn-ghost danger" onclick="deleteSession(${s._idx})">Elimina</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div>
+        ${s.exercises.map(ex => `
+          <div style="margin-bottom:8px">
+            <div style="font-weight:600">${escapeHtml(ex.name)}</div>
+            ${ex.sets.map(set => `<div class="small muted">• ${set.weight}kg x ${set.repsDone} reps</div>`).join('')}
+          </div>
+        `).join('')}
+      </div>
+    `;
+    detail.appendChild(html);
+  });
+}
+
+/* Delete a single session by history index */
+function deleteSession(historyIndex){
+  if(!Number.isInteger(historyIndex) || historyIndex < 0 || historyIndex >= history.length) return;
+  if(!confirm('Eliminare questa sessione dalla cronologia?')) return;
+  history.splice(historyIndex,1);
+  saveData();
+  renderCalendar();
+  // if the currently shown date is still visible, re-render detail
+  const month = Number(document.getElementById('calendar-month').value);
+  const year = Number(document.getElementById('calendar-year').value);
+  const today = new Date();
+  // attempt to refresh detail if visible
+  const detailEl = document.getElementById('history-detail');
+  if(detailEl && detailEl.innerHTML.trim() !== '') {
+    // try to extract date from header
+    const header = detailEl.querySelector('h3');
+    if(header){
+      const txt = header.innerText.replace('Allenamenti del ','').trim();
+      showHistoryDetail(txt);
+    }
+  }
+}
+
+/* Delete all sessions for a date (helper) */
+function clearHistoryForDate(date){
+  if(!confirm(`Eliminare tutte le sessioni del ${date}?`)) return;
+  history = history.filter(h => h.date !== date);
+  saveData();
+  renderCalendar();
+  document.getElementById('history-detail').innerHTML = '';
+}
+
+/* Replay session: start a new active workout prefilled from session */
+function replaySession(historyIndex){
+  if(!Number.isInteger(historyIndex) || historyIndex < 0 || historyIndex >= history.length) return;
+  const session = history[historyIndex];
+  // deep clone
+  currentWorkout = {
+    name: session.name + ' (Riprova)',
+    exercises: JSON.parse(JSON.stringify(session.exercises))
+  };
+  // reset repsDone to 0 but keep weights as last used
+  currentWorkout.exercises.forEach(ex => {
+    ex.sets.forEach(s => { s.repsDone = 0; s.completed = false; });
+  });
+  document.getElementById('active-workout-name').innerText = currentWorkout.name;
+  document.getElementById('active-date').innerText = new Date().toLocaleString();
+  showView('active');
+  renderActiveExercises();
+}
+
+/* -------------------------
+   Init
+   ------------------------- */
+function init(){
+  populateCalendarSelectors();
+  renderWorkouts();
+  renderCalendar();
+  setActiveTab('workouts');
+}
+init();
+
+/* -------------------------
+   Small helpers
+   ------------------------- */
+function escapeHtml(str){
+  if(!str && str !== 0) return '';
+  return String(str).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); });
+}
+
+/* Register service worker (separate file sw.js as requested) */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{ /* ignore */ });
 }
 </script>
 
