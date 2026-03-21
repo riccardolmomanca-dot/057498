@@ -71,6 +71,221 @@
         </button>
     </nav>
 
-    <script>
-        // --- LOGICA DATI ---
-        let workouts = JSON.parse(localStorage
+<script>
+// --- LOGICA DATI ---
+let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
+let history = JSON.parse(localStorage.getItem('history')) || [];
+let currentWorkout = null;
+let timerInterval;
+
+const beep = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+
+function saveData() {
+    localStorage.setItem('workouts', JSON.stringify(workouts));
+    localStorage.setItem('history', JSON.stringify(history));
+}
+
+// --- NAVIGAZIONE ---
+function showView(view) {
+    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+    document.getElementById(`view-${view}`).classList.remove('hidden');
+    if(view === 'workouts') renderWorkouts();
+    if(view === 'calendar') renderCalendar();
+}
+
+// --- GESTIONE ALLENAMENTI ---
+function renderWorkouts() {
+    const list = document.getElementById('workout-list');
+    list.innerHTML = workouts.map((w, i) => `
+        <div class="bg-white p-4 rounded shadow flex justify-between items-center">
+            <div>
+                <h3 class="font-bold text-lg">${w.name}</h3>
+                <p class="text-sm text-gray-500">${w.exercises.length} esercizi</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="startWorkout(${i})" class="bg-green-500 text-white p-2 rounded text-sm">Inizia</button>
+                <button onclick="showWorkoutEditor(${i})" class="bg-blue-100 text-blue-600 p-2 rounded text-sm">Modifica</button>
+                <button onclick="deleteWorkout(${i})" class="bg-red-100 text-red-600 p-2 rounded text-sm">Elimina</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showWorkoutEditor(index = null) {
+    showView('editor');
+    const nameInput = document.getElementById('edit-workout-name');
+    const list = document.getElementById('exercise-list');
+    list.innerHTML = '';
+    
+    if(index !== null) {
+        currentWorkout = { ...workouts[index], index };
+        nameInput.value = currentWorkout.name;
+        currentWorkout.exercises.forEach(ex => addExerciseField(ex));
+    } else {
+        currentWorkout = { name: '', exercises: [], index: null };
+        nameInput.value = '';
+        addExerciseField();
+    }
+}
+
+function addExerciseField(data = { name: '', sets: 3, reps: 10, weight: [], rest: 60 }) {
+    const div = document.createElement('div');
+    div.className = "bg-white p-4 rounded border relative exercise-entry";
+    div.innerHTML = `
+        <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-500 text-xl">&times;</button>
+        <input type="text" placeholder="Nome Esercizio" class="ex-name w-full mb-2 font-bold border-b" value="${data.name}">
+        <div class="grid grid-cols-2 gap-2 text-sm">
+            <label>Serie: <input type="number" class="ex-sets w-16 p-1 border rounded" value="${data.sets}"></label>
+            <label>Reps: <input type="number" class="ex-reps w-16 p-1 border rounded" value="${data.reps}"></label>
+            <label>Recupero (sec): <input type="number" class="ex-rest w-16 p-1 border rounded" value="${data.rest}"></label>
+        </div>
+    `;
+    document.getElementById('exercise-list').appendChild(div);
+}
+
+function saveWorkout() {
+    const name = document.getElementById('edit-workout-name').value;
+    const exercises = Array.from(document.querySelectorAll('.exercise-entry')).map(el => ({
+        name: el.querySelector('.ex-name').value,
+        sets: parseInt(el.querySelector('.ex-sets').value),
+        reps: parseInt(el.querySelector('.ex-reps').value),
+        rest: parseInt(el.querySelector('.ex-rest').value),
+        weights: new Array(parseInt(el.querySelector('.ex-sets').value)).fill(0)
+    }));
+
+    const newWorkout = { name, exercises };
+    if(currentWorkout.index !== null) workouts[currentWorkout.index] = newWorkout;
+    else workouts.push(newWorkout);
+    
+    saveData();
+    showView('workouts');
+}
+
+function deleteWorkout(i) {
+    if(confirm('Eliminare questo allenamento?')) {
+        workouts.splice(i, 1);
+        saveData();
+        renderWorkouts();
+    }
+}
+
+// --- ESECUZIONE ---
+function startWorkout(index) {
+    currentWorkout = JSON.parse(JSON.stringify(workouts[index]));
+    showView('active');
+    document.getElementById('active-workout-name').innerText = currentWorkout.name;
+    renderActiveExercises();
+}
+
+function renderActiveExercises() {
+    const container = document.getElementById('active-exercises');
+    container.innerHTML = currentWorkout.exercises.map((ex, exIdx) => `
+        <div class="bg-white p-4 rounded shadow">
+            <h3 class="font-bold text-blue-600 mb-2">${ex.name} (${ex.rest}s rec)</h3>
+            <div class="space-y-2">
+                ${ex.weights.map((w, sIdx) => `
+                    <div class="flex items-center justify-between p-2 border-b last:border-0" id="set-${exIdx}-${sIdx}">
+                        <span>Serie ${sIdx + 1}</span>
+                        <div class="flex items-center gap-2">
+                            <input type="number" value="${w}" 
+                                onchange="currentWorkout.exercises[${exIdx}].weights[${sIdx}] = Number(this.value)"
+                                class="w-14 p-1 border rounded text-center"> kg
+                            <button onclick="completeSet(${exIdx}, ${sIdx}, ${ex.rest})" 
+                                class="set-btn bg-gray-200 p-2 rounded w-10 h-10">✓</button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function completeSet(exIdx, sIdx, rest) {
+    const btn = document.querySelector(`#set-${exIdx}-${sIdx} .set-btn`);
+    btn.classList.replace('bg-gray-200', 'bg-green-500');
+    btn.classList.add('text-white');
+    btn.disabled = true;
+    startTimer(rest);
+}
+
+function startTimer(seconds) {
+    const overlay = document.getElementById('timer-overlay');
+    const display = document.getElementById('timer-display');
+    overlay.classList.remove('hidden');
+    
+    let timeLeft = seconds;
+    display.innerText = timeLeft;
+    
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        display.innerText = timeLeft;
+        if(timeLeft <= 0) {
+            clearInterval(timerInterval);
+            beep.play().catch(() => {}); 
+            closeTimer();
+        }
+    }, 1000);
+}
+
+function closeTimer() {
+    clearInterval(timerInterval);
+    document.getElementById('timer-overlay').classList.add('hidden');
+}
+
+function finishWorkout() {
+    const session = {
+        name: currentWorkout.name,
+        date: new Date().toISOString().split('T')[0],
+        exercises: currentWorkout.exercises
+    };
+    history.push(session);
+    saveData();
+    alert("Allenamento completato e salvato!");
+    showView('workouts');
+}
+
+// --- CALENDARIO ---
+function renderCalendar() {
+    const grid = document.getElementById('calendar-grid');
+    const historyDetail = document.getElementById('history-detail');
+    grid.innerHTML = '';
+    historyDetail.innerHTML = '';
+
+    const today = new Date();
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+
+    for (let i = 1; i <= daysInMonth; i++) {
+        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        const hasWorkout = history.some(h => h.date === dateStr);
+        
+        const dayEl = document.createElement('div');
+        dayEl.className = `p-2 rounded text-sm ${hasWorkout ? 'bg-green-500 text-white font-bold cursor-pointer' : 'bg-gray-200'}`;
+        dayEl.innerText = i;
+        if(hasWorkout) dayEl.onclick = () => showHistoryDetail(dateStr);
+        grid.appendChild(dayEl);
+    }
+}
+
+function showHistoryDetail(date) {
+    const sessions = history.filter(h => h.date === date);
+    const detail = document.getElementById('history-detail');
+    detail.innerHTML = `<h3 class="font-bold border-b pb-2">Allenamenti del ${date}</h3>`;
+    sessions.forEach(s => {
+        detail.innerHTML += `
+            <div class="bg-white p-3 rounded shadow-sm text-sm">
+                <p class="font-bold">${s.name}</p>
+                ${s.exercises.map(ex => `<p class="text-xs">${ex.name}: ${ex.weights.join('kg, ')}kg</p>`).join('')}
+            </div>
+        `;
+    });
+}
+
+// Inizializzazione
+renderWorkouts();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}
+</script>
