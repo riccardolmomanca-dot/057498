@@ -1,25 +1,61 @@
-const CACHE_NAME = 'gymtrack-v2';
+/* GymTrack — Service Worker v2
+   Strategia: Cache First per assets locali, Network First per Google Fonts
+*/
+
+const CACHE = 'gymtrack-v2';
 const ASSETS = [
-  'index.html',
-  'manifest.json'
+  './',
+  './index.html',
+  './manifest.json'
 ];
 
-self.addEventListener('install', (e) => {
+/* ── Install: pre-cache assets ── */
+self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+    caches.open(CACHE).then(c => c.addAll(ASSETS))
   );
+  self.skipWaiting();
 });
 
-self.addEventListener('activate', (e) => {
+/* ── Activate: pulisci vecchie cache ── */
+self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
     )
   );
+  self.clients.claim();
 });
 
-self.addEventListener('fetch', (e) => {
+/* ── Fetch: Cache First, fallback Network ── */
+self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
+
+  /* Google Fonts: Network First con fallback cache */
+  if(url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')){
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  /* Assets locali: Cache First */
   e.respondWith(
-    caches.match(e.request).then(response => response || fetch(e.request))
+    caches.match(e.request).then(cached => {
+      if(cached) return cached;
+      return fetch(e.request).then(res => {
+        if(res && res.status === 200 && res.type !== 'opaque'){
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
+        return res;
+      });
+    })
   );
 });
