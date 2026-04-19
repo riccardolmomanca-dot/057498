@@ -3,298 +3,437 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GymTrack — Minimal Premium</title>
-
-  <!-- Inter font -->
+  <title>GymTrack</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-
   <meta name="theme-color" content="#ffffff">
   <link rel="manifest" href="manifest.json">
-
   <style>
     :root{
-      --bg:#ffffff;
+      --bg:#f5f5f7;
       --card:#ffffff;
       --muted:#6b7280;
       --text:#111827;
-      --accent:#1c1c1e; /* carbone */
+      --accent:#1c1c1e;
       --accent-strong:#111111;
       --success:#10b981;
-      --glass: rgba(255,255,255,0.6);
+      --danger:#ef4444;
       --radius:14px;
-      --shadow: 0 6px 18px rgba(17,24,39,0.06);
-      --border: 1px solid rgba(17,24,39,0.06);
+      --shadow:0 2px 12px rgba(17,24,39,0.07);
+      --border:1px solid rgba(17,24,39,0.07);
     }
-
-    html,body{height:100%}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
     body{
-      margin:0;
-      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
       background:var(--bg);
       color:var(--text);
       -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
       -webkit-tap-highlight-color:transparent;
-      padding-bottom:84px; /* space for nav */
+      padding-bottom:90px;
     }
 
-    /* Container */
-    .wrap{max-width:820px;margin:28px auto;padding:20px;}
+    /* ── Wrap ── */
+    .wrap{max-width:820px;margin:0 auto;padding:16px 16px 0}
 
+    /* ── Appbar ── */
     header.appbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:18px 20px;
-      border-radius:16px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.6));
-      box-shadow:var(--shadow);
-      border:var(--border);
-      position:sticky;
-      top:14px;
-      z-index:20;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:12px 16px;border-radius:16px;
+      background:rgba(255,255,255,0.85);
+      backdrop-filter:blur(10px);
+      box-shadow:var(--shadow);border:var(--border);
+      position:sticky;top:12px;z-index:20;
+      transition:padding .25s,border-radius .25s;
     }
-    .brand{
-      display:flex;align-items:center;gap:12px;
+    header.appbar.compact{
+      padding:8px 14px;border-radius:12px;top:8px;
     }
-    .logo{
-      width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#f8fafc,#eef2f7);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent-strong);box-shadow:0 2px 6px rgba(17,24,39,0.04);
-    }
-    h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-0.2px}
-    p.lead{margin:0;color:var(--muted);font-size:13px}
+    .brand{display:flex;align-items:center;gap:10px}
 
-    /* Views */
-    section.view{display:none}
+    /* ── Logo SVG ── */
+    .logo-wrap{
+      width:40px;height:40px;flex-shrink:0;
+      background:var(--accent-strong);border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 2px 8px rgba(17,24,39,0.18);
+      transition:width .25s,height .25s,border-radius .25s;
+    }
+    .compact .logo-wrap{width:32px;height:32px;border-radius:8px}
+    .logo-wrap svg{display:block}
+
+    .brand-text h1{font-size:17px;margin:0;font-weight:700;letter-spacing:-0.2px;line-height:1.2}
+    .brand-text p{margin:0;color:var(--muted);font-size:12px;line-height:1.3}
+    .compact .brand-text p{display:none}
+    .compact .brand-text h1{font-size:15px}
+
+    .appbar-actions{display:flex;gap:8px;align-items:center}
+
+    /* ── Views ── */
+    section.view{display:none;animation:fadeIn .18s ease}
     section.view.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
-    /* Workouts list */
-    .list{display:grid;gap:12px}
+    /* ── Cards ── */
     .card{
-      background:var(--card);
-      border-radius:12px;
-      padding:14px;
-      border:var(--border);
-      box-shadow:none;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
+      background:var(--card);border-radius:12px;padding:14px;
+      border:var(--border);box-shadow:var(--shadow);
+      display:flex;justify-content:space-between;align-items:center;gap:12px;
     }
-    .card .meta{display:flex;flex-direction:column}
-    .card h3{margin:0;font-size:15px}
-    .card p{margin:0;color:var(--muted);font-size:13px}
+    .card .meta{display:flex;flex-direction:column;gap:2px}
+    .card h3{margin:0;font-size:15px;font-weight:600}
 
+    /* ── Buttons ── */
     .btn{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:8px 12px;border-radius:10px;border:none;cursor:pointer;font-weight:600;font-size:13px;
+      display:inline-flex;align-items:center;gap:6px;
+      padding:8px 13px;border-radius:10px;border:none;cursor:pointer;
+      font-family:inherit;font-weight:600;font-size:13px;transition:opacity .15s,transform .1s;
     }
-    .btn-solid{background:var(--accent-strong);color:#fff;box-shadow:0 6px 18px rgba(17,24,39,0.06)}
-    .btn-outline{background:transparent;border:1px solid rgba(17,24,39,0.06);color:var(--accent-strong)}
-    .btn-ghost{background:transparent;color:var(--muted);border-radius:8px;padding:6px 8px}
+    .btn:active{transform:scale(0.96)}
+    .btn-solid{background:var(--accent-strong);color:#fff;box-shadow:0 4px 12px rgba(17,24,39,0.12)}
+    .btn-outline{background:var(--card);border:var(--border);color:var(--accent-strong)}
+    .btn-ghost{background:transparent;color:var(--muted);padding:6px 8px}
+    .btn-danger{background:#fef2f2;color:var(--danger);border:1px solid #fecaca}
+    .btn-sm{padding:6px 10px;font-size:12px;border-radius:8px}
 
+    /* ── FAB ── */
     .fab{
-      position:fixed;right:22px;bottom:96px;width:64px;height:64px;border-radius:16px;background:var(--accent-strong);color:#fff;font-size:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(17,24,39,0.12);border:none;cursor:pointer;
+      position:fixed;right:20px;bottom:98px;
+      width:58px;height:58px;border-radius:16px;
+      background:var(--accent-strong);color:#fff;
+      font-size:26px;display:flex;align-items:center;justify-content:center;
+      box-shadow:0 8px 24px rgba(17,24,39,0.18);border:none;cursor:pointer;
+      transition:transform .15s;
     }
+    .fab:active{transform:scale(0.93)}
 
-    /* Editor */
-    .editor{display:grid;gap:12px}
-    .field{background:var(--card);padding:12px;border-radius:12px;border:var(--border);display:flex;flex-direction:column;gap:8px}
-    .field input[type="text"], .field input[type="number"], .field select{
-      padding:10px;border-radius:10px;border:1px solid rgba(17,24,39,0.06);font-size:14px;
+    /* ── List ── */
+    .list{display:grid;gap:10px;margin-top:14px}
+
+    /* ── Section header ── */
+    .sec-header{display:flex;justify-content:space-between;align-items:center;margin-top:20px;margin-bottom:4px}
+    .sec-header h2{margin:0;font-size:20px;font-weight:700}
+
+    /* ── Editor ── */
+    .editor{display:grid;gap:10px}
+    .field{background:var(--card);padding:12px;border-radius:12px;border:var(--border)}
+    .field label.lbl{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bottom:6px}
+    .field input[type="text"],.field input[type="number"],.field select{
+      width:100%;padding:10px 12px;border-radius:9px;
+      border:var(--border);font-size:14px;font-family:inherit;
+      background:#fafafa;color:var(--text);outline:none;
     }
-    .exercise-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
-    .small{font-size:13px;color:var(--muted)}
+    .field input:focus{border-color:var(--accent-strong);background:#fff}
+    .exercise-row{display:grid;grid-template-columns:1fr auto;gap:10px}
+    .ex-inputs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .ex-inputs label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px;flex:1;min-width:80px}
+    .ex-inputs input{padding:8px;border-radius:8px;border:var(--border);font-size:13px;font-family:inherit;text-align:center;background:#fafafa}
+    .ex-actions{display:flex;flex-direction:column;gap:6px;align-items:flex-end;justify-content:flex-start;padding-top:2px}
 
-    /* Active workout */
-    .exercise-card{border:var(--border);padding:12px;border-radius:12px;background:var(--card)}
-    .sets-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-    .set-row{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:8px;border-radius:10px;border:1px solid rgba(17,24,39,0.03)}
-    .set-controls{display:flex;gap:8px;align-items:center}
-    .input-sm{width:84px;padding:8px;border-radius:8px;border:1px solid rgba(17,24,39,0.06);text-align:center}
+    /* ── Active workout ── */
+    .exercise-card{
+      background:var(--card);border-radius:12px;padding:14px;
+      border:var(--border);box-shadow:var(--shadow);
+    }
+    .ex-card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+    .ex-card-head .name{font-weight:700;font-size:15px}
+    .ex-card-head .meta{font-size:12px;color:var(--muted);margin-top:2px}
+    .sets-list{display:flex;flex-direction:column;gap:8px}
+    .set-row{
+      display:flex;align-items:center;gap:8px;
+      padding:10px 12px;border-radius:10px;
+      border:var(--border);background:#fafafa;
+      transition:background .2s;
+    }
+    .set-row.done{background:#f0fdf4;border-color:#bbf7d0}
+    .set-num{font-size:12px;color:var(--muted);font-weight:600;min-width:48px}
+    .set-inputs{display:flex;gap:8px;flex:1}
+    .input-set{
+      flex:1;min-width:0;
+      padding:10px 8px;border-radius:8px;
+      border:var(--border);font-size:15px;font-family:inherit;
+      text-align:center;background:#fff;font-weight:600;
+    }
+    .input-set:focus{outline:none;border-color:var(--accent-strong)}
+    .set-label{font-size:10px;color:var(--muted);text-align:center;margin-top:3px}
+    .input-wrap{display:flex;flex-direction:column}
+    .btn-complete{
+      width:44px;height:44px;border-radius:10px;border:none;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      background:var(--accent-strong);color:#fff;font-size:16px;
+      flex-shrink:0;transition:transform .1s,background .2s;
+    }
+    .btn-complete:active{transform:scale(0.92)}
+    .btn-complete.done{background:#d1fae5;color:#065f46;pointer-events:none}
 
-    /* Timer overlay */
-    #timer-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:60;background:rgba(17,24,39,0.6);backdrop-filter:blur(6px);color:#fff;flex-direction:column}
-    #timer-display{font-family:monospace;font-size:72px;font-weight:700}
+    /* ── Timer overlay ── */
+    #timer-overlay{
+      position:fixed;inset:0;display:none;
+      align-items:center;justify-content:center;z-index:60;
+      background:rgba(17,24,39,0.65);backdrop-filter:blur(8px);
+      color:#fff;flex-direction:column;gap:8px;
+    }
+    #timer-display{font-family:monospace;font-size:76px;font-weight:800;line-height:1}
+    .timer-label{font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:8px}
+    .timer-actions{display:flex;gap:10px}
 
-    /* Calendar */
-    .calendar-controls{display:flex;gap:8px;align-items:center;margin-bottom:12px}
-    .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+    /* ── Calendar ── */
+    .cal-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .cal-controls select{padding:8px 10px;border-radius:9px;border:var(--border);font-size:13px;font-family:inherit;background:var(--card)}
+    .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px}
     .day{
-      padding:12px;border-radius:10px;text-align:center;border:var(--border);background:#f8fafc;color:var(--muted);cursor:default;
+      aspect-ratio:1;border-radius:9px;display:flex;align-items:center;justify-content:center;
+      font-size:13px;font-weight:500;border:var(--border);background:var(--card);color:var(--muted);
     }
-    .day.has{background:linear-gradient(180deg,var(--success),#34d399);color:#fff;font-weight:700;cursor:pointer}
-    .history-detail{margin-top:12px;display:flex;flex-direction:column;gap:10px}
-    .session-card{background:var(--card);padding:12px;border-radius:12px;border:var(--border);display:flex;flex-direction:column;gap:8px}
-    .session-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .day.has{background:var(--accent-strong);color:#fff;font-weight:700;cursor:pointer}
+    .day.has:active{opacity:0.8}
+    .history-detail{margin-top:14px;display:grid;gap:10px}
+    .session-card{background:var(--card);padding:14px;border-radius:12px;border:var(--border);box-shadow:var(--shadow)}
+    .session-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}
+    .divider{height:1px;background:rgba(17,24,39,0.05);margin:8px 0}
 
-    /* Nav (iOS style with blur) */
+    /* ── Stats / Export section ── */
+    .tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+    .tool-card{
+      background:var(--card);border-radius:12px;padding:16px;
+      border:var(--border);box-shadow:var(--shadow);
+      display:flex;flex-direction:column;gap:8px;
+    }
+    .tool-card h4{margin:0;font-size:14px;font-weight:700}
+    .tool-card p{margin:0;font-size:12px;color:var(--muted);line-height:1.4}
+
+    /* ── Nav ── */
     nav.bottom{
-      position:fixed;left:50%;transform:translateX(-50%);bottom:18px;width:calc(100% - 40px);max-width:820px;border-radius:18px;padding:8px 12px;display:flex;justify-content:space-around;align-items:center;gap:6px;background:rgba(255,255,255,0.6);backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(17,24,39,0.08);border:1px solid rgba(17,24,39,0.04);z-index:50;
+      position:fixed;left:50%;transform:translateX(-50%);
+      bottom:14px;width:calc(100% - 32px);max-width:820px;
+      border-radius:18px;padding:6px 12px;
+      display:flex;justify-content:space-around;align-items:center;
+      background:rgba(255,255,255,0.75);backdrop-filter:blur(12px);
+      box-shadow:0 8px 28px rgba(17,24,39,0.1);
+      border:var(--border);z-index:50;
+      transition:transform .25s,opacity .25s;
     }
-    .tab{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 12px;border-radius:12px;color:var(--muted);font-size:12px;cursor:pointer}
-    .tab.active{color:var(--accent-strong);background:rgba(17,24,39,0.03)}
+    nav.bottom.compact{
+      padding:4px 12px;border-radius:14px;
+    }
+    .tab{
+      display:flex;flex-direction:column;align-items:center;gap:3px;
+      padding:7px 16px;border-radius:12px;color:var(--muted);font-size:11px;cursor:pointer;
+      transition:background .15s,color .15s;font-weight:500;
+    }
+    .tab.active{color:var(--accent-strong);background:rgba(17,24,39,0.05)}
+    .compact .tab span.tab-label{display:none}
 
-    /* small helpers */
+    /* ── Helpers ── */
+    .small{font-size:13px}
     .muted{color:var(--muted)}
     .row{display:flex;gap:8px;align-items:center}
-    .divider{height:1px;background:rgba(17,24,39,0.03);margin:8px 0;border-radius:2px}
-    .danger{color:#ef4444}
-    .hidden{display:none}
-    @media (max-width:520px){
-      .wrap{padding:14px;margin:12px}
-      .fab{right:16px;bottom:110px}
+    .danger{color:var(--danger)}
+    .hidden{display:none!important}
+    .mt8{margin-top:8px}
+    .mt12{margin-top:12px}
+    .empty-state{
+      background:var(--card);border-radius:12px;padding:28px 20px;
+      border:var(--border);text-align:center;color:var(--muted);
+    }
+    .empty-state svg{margin-bottom:10px;opacity:0.3}
+    @media(max-width:520px){
+      .wrap{padding:12px 12px 0}
+      .fab{right:14px;bottom:102px}
+      .tools-grid{grid-template-columns:1fr}
     }
   </style>
 </head>
 <body>
 
-  <div class="wrap">
-    <header class="appbar" role="banner">
-      <div class="brand">
-        <div class="logo">GT</div>
-        <div>
-          <h1>GymTrack</h1>
-          <p class="lead">I tuoi allenamenti — minimal & premium</p>
-        </div>
-      </div>
+<div class="wrap">
 
+  <!-- APPBAR -->
+  <header class="appbar" id="appbar" role="banner">
+    <div class="brand">
+      <div class="logo-wrap" aria-hidden="true">
+        <!-- Minimal dumbbell logo -->
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1.5" y="10" width="3" height="4" rx="1" fill="white" opacity="0.5"/>
+          <rect x="1.5" y="8.5" width="3" height="7" rx="1.2" fill="white" opacity="0.85"/>
+          <rect x="19.5" y="10" width="3" height="4" rx="1" fill="white" opacity="0.5"/>
+          <rect x="19.5" y="8.5" width="3" height="7" rx="1.2" fill="white" opacity="0.85"/>
+          <rect x="4.5" y="11" width="15" height="2" rx="1" fill="white"/>
+          <rect x="6" y="9" width="3" height="6" rx="1.2" fill="white"/>
+          <rect x="15" y="9" width="3" height="6" rx="1.2" fill="white"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>GymTrack</h1>
+        <p>Minimal &amp; Premium</p>
+      </div>
+    </div>
+    <div class="appbar-actions" id="appbar-actions">
+      <button class="btn btn-outline btn-sm" onclick="showView('workouts')">Home</button>
+      <button class="btn btn-ghost btn-sm" onclick="showView('calendar');setActiveTab('calendar')">Calendario</button>
+      <button class="btn btn-ghost btn-sm" onclick="showView('data');setActiveTab('data')">Dati</button>
+    </div>
+  </header>
+
+  <!-- WORKOUTS VIEW -->
+  <section id="view-workouts" class="view active">
+    <div class="sec-header">
+      <div>
+        <h2>I miei workout</h2>
+        <p class="small muted mt8">Template salvati</p>
+      </div>
+    </div>
+    <div class="list" id="workout-list"></div>
+    <button class="fab" title="Nuovo workout" onclick="showWorkoutEditor()">+</button>
+  </section>
+
+  <!-- EDITOR VIEW -->
+  <section id="view-editor" class="view">
+    <div class="sec-header" style="margin-top:12px">
+      <div>
+        <h2 id="editor-title">Nuovo workout</h2>
+        <p class="small muted mt8">Esercizi, serie e target</p>
+      </div>
       <div class="row">
-        <button class="btn btn-outline" onclick="showView('workouts')">Home</button>
-        <button class="btn btn-ghost" onclick="showView('calendar')">Calendario</button>
+        <button class="btn btn-outline btn-sm" onclick="showView('workouts')">Annulla</button>
+        <button class="btn btn-solid btn-sm" onclick="saveWorkout()">Salva</button>
       </div>
-    </header>
-
-    <!-- WORKOUTS VIEW -->
-    <section id="view-workouts" class="view active">
-      <div style="margin-top:18px;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <h2 style="margin:0">I miei workout</h2>
-          <p class="small muted" style="margin-top:6px">Template salvati — la cronologia resta separata</p>
-        </div>
+    </div>
+    <div class="editor mt12">
+      <div class="field">
+        <label class="lbl">Nome allenamento</label>
+        <input id="edit-workout-name" type="text" placeholder="Es. Upper Body">
       </div>
-
-      <div class="list" id="workout-list" style="margin-top:12px"></div>
-
-      <button class="fab" title="Nuovo workout" onclick="showWorkoutEditor()">
-        +
-      </button>
-    </section>
-
-    <!-- EDITOR VIEW -->
-    <section id="view-editor" class="view">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div>
-          <h2 id="editor-title" style="margin:0">Nuovo workout</h2>
-          <p class="small muted" style="margin-top:6px">Definisci esercizi, serie e target</p>
-        </div>
-        <div class="row">
-          <button class="btn btn-outline" onclick="showView('workouts')">Annulla</button>
-          <button class="btn btn-solid" onclick="saveWorkout()">Salva</button>
-        </div>
+      <div id="exercise-list" style="display:grid;gap:10px"></div>
+      <div class="row mt8">
+        <button class="btn btn-outline btn-sm" onclick="addExerciseField()">+ Aggiungi esercizio</button>
+        <button class="btn btn-ghost btn-sm" onclick="duplicateSelected()">Duplica ultimo</button>
       </div>
+    </div>
+  </section>
 
-      <div class="editor">
-        <div class="field">
-          <label class="small">Nome allenamento</label>
-          <input id="edit-workout-name" type="text" placeholder="Es. Upper Body">
-        </div>
-
-        <div id="exercise-list" style="display:grid;gap:10px"></div>
-
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-outline" onclick="addExerciseField()">+ Aggiungi esercizio</button>
-          <button class="btn btn-ghost" onclick="duplicateSelected()">Duplica ultimo</button>
-        </div>
+  <!-- ACTIVE WORKOUT VIEW -->
+  <section id="view-active" class="view">
+    <div class="sec-header" style="margin-top:8px">
+      <div>
+        <h2 id="active-workout-name">Allenamento</h2>
+        <p class="small muted" id="active-date" style="margin-top:4px"></p>
       </div>
-    </section>
-
-    <!-- ACTIVE WORKOUT VIEW -->
-    <section id="view-active" class="view">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <h2 id="active-workout-name" style="margin:0">Allenamento</h2>
-          <p class="small muted" id="active-date" style="margin-top:6px"></p>
-        </div>
-        <div class="row">
-          <button class="btn btn-outline" onclick="cancelActive()">Annulla</button>
-          <button class="btn btn-solid" onclick="finishWorkout()">Termina</button>
-        </div>
+      <div class="row">
+        <button class="btn btn-outline btn-sm" onclick="cancelActive()">Annulla</button>
+        <button class="btn btn-solid btn-sm" onclick="finishWorkout()">Termina</button>
       </div>
+    </div>
+    <div id="active-exercises" style="margin-top:12px;display:grid;gap:12px;padding-bottom:24px"></div>
+  </section>
 
-      <div id="active-exercises" style="margin-top:14px;display:grid;gap:12px"></div>
-    </section>
-
-    <!-- CALENDAR VIEW -->
-    <section id="view-calendar" class="view">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <h2 style="margin:0">Calendario</h2>
-          <p class="small muted" style="margin-top:6px">Seleziona un giorno per vedere le sessioni</p>
-        </div>
-        <div class="calendar-controls">
-          <select id="calendar-month"></select>
-          <select id="calendar-year"></select>
-          <button class="btn btn-solid" onclick="renderCalendar()">Vai</button>
-        </div>
+  <!-- CALENDAR VIEW -->
+  <section id="view-calendar" class="view">
+    <div class="sec-header">
+      <h2>Calendario</h2>
+      <div class="cal-controls">
+        <select id="calendar-month"></select>
+        <select id="calendar-year"></select>
+        <button class="btn btn-solid btn-sm" onclick="renderCalendar()">Vai</button>
       </div>
+    </div>
+    <div class="calendar-grid" id="calendar-grid"></div>
+    <div id="history-detail" class="history-detail"></div>
+  </section>
 
-      <div class="calendar-grid" id="calendar-grid" style="margin-top:12px"></div>
+  <!-- DATA VIEW -->
+  <section id="view-data" class="view">
+    <div class="sec-header"><h2>Dati</h2></div>
+    <p class="small muted mt8">Esporta o importa i tuoi dati di allenamento.</p>
 
-      <div id="history-detail" class="history-detail"></div>
-    </section>
+    <div class="tools-grid">
+      <div class="tool-card">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0-4-4m4 4 4-4" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="#111" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <h4>Esporta JSON</h4>
+        <p>Backup completo di workout e cronologia. Usalo per ripristinare i dati.</p>
+        <button class="btn btn-solid btn-sm" onclick="exportJSON()">Scarica JSON</button>
+      </div>
+      <div class="tool-card">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 21V9m0 0 4 4m-4-4-4 4" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="#111" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <h4>Importa JSON</h4>
+        <p>Ripristina un backup. Puoi scegliere se unire o sostituire i dati esistenti.</p>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('import-file').click()">Carica file</button>
+        <input type="file" id="import-file" accept=".json" class="hidden" onchange="importJSON(event)">
+      </div>
+      <div class="tool-card">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#111" stroke-width="1.8"/><path d="M3 9h18M9 9v12" stroke="#111" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <h4>Esporta CSV</h4>
+        <p>Cronologia allenamenti in formato CSV, apribile con Excel o Google Sheets.</p>
+        <button class="btn btn-solid btn-sm" onclick="exportCSV()">Scarica CSV</button>
+      </div>
+      <div class="tool-card">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#ef4444" stroke-width="1.8"/><path d="M8 12h8" stroke="#ef4444" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <h4>Cancella dati</h4>
+        <p>Rimuove tutti i workout e la cronologia. L'operazione è irreversibile.</p>
+        <button class="btn btn-danger btn-sm" onclick="clearAllData()">Cancella tutto</button>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;background:var(--card);border-radius:12px;padding:14px;border:var(--border)">
+      <h4 style="margin:0 0 6px;font-size:14px">Statistiche rapide</h4>
+      <div id="quick-stats" class="small muted"></div>
+    </div>
+  </section>
+
+</div><!-- /wrap -->
+
+<!-- Timer overlay -->
+<div id="timer-overlay">
+  <div id="timer-display">00:00</div>
+  <div class="timer-label">Recupero</div>
+  <div class="timer-actions">
+    <button class="btn btn-outline" onclick="closeTimer()">Chiudi</button>
+    <button class="btn btn-solid" onclick="skipTimer()">Salta</button>
   </div>
+</div>
 
-  <!-- Timer overlay -->
-  <div id="timer-overlay">
-    <div id="timer-display">00:00</div>
-    <div class="small muted" style="margin-bottom:18px">Recupero</div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-outline" onclick="closeTimer()">Chiudi</button>
-      <button class="btn btn-solid" onclick="skipTimer()">Salta</button>
-    </div>
+<!-- Bottom nav -->
+<nav class="bottom" id="bottom-nav" role="navigation">
+  <div class="tab active" id="tab-workouts" onclick="showView('workouts');setActiveTab('workouts')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M16 3v4M8 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    <span class="tab-label">Workouts</span>
   </div>
-
-  <!-- Bottom nav (iOS style blur) -->
-  <nav class="bottom" role="navigation" aria-label="Tab bar">
-    <div class="tab active" id="tab-workouts" onclick="showView('workouts'); setActiveTab('workouts')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M6 2v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 2v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="8" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
-      <div>Workouts</div>
-    </div>
-    <div class="tab" id="tab-calendar" onclick="showView('calendar'); setActiveTab('calendar')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-      <div>Calendario</div>
-    </div>
-  </nav>
+  <div class="tab" id="tab-calendar" onclick="showView('calendar');setActiveTab('calendar')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="tab-label">Calendario</span>
+  </div>
+  <div class="tab" id="tab-data" onclick="showView('data');setActiveTab('data')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="tab-label">Dati</span>
+  </div>
+</nav>
 
 <script>
-/* -------------------------
-   Data model (localStorage)
-   ------------------------- */
+/* ── Data ── */
 let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
-let history = JSON.parse(localStorage.getItem('history')) || [];
+let history  = JSON.parse(localStorage.getItem('history'))  || [];
 let currentWorkout = null;
-let editingIndex = null;
-let timerInterval = null;
+let editingIndex   = null;
+let timerInterval  = null;
 
-/* Utility */
 function saveData(){
   localStorage.setItem('workouts', JSON.stringify(workouts));
-  localStorage.setItem('history', JSON.stringify(history));
+  localStorage.setItem('history',  JSON.stringify(history));
 }
 
-/* -------------------------
-   UI helpers
-   ------------------------- */
+/* ── UI helpers ── */
 function showView(name){
   document.querySelectorAll('section.view').forEach(s => s.classList.remove('active'));
   const el = document.getElementById('view-' + name);
   if(el) el.classList.add('active');
 
-  // render relevant content
+  const isActive = name === 'active';
+  document.getElementById('appbar').classList.toggle('compact', isActive);
+  document.getElementById('bottom-nav').classList.toggle('compact', isActive);
+
   if(name === 'workouts') renderWorkouts();
   if(name === 'calendar') renderCalendar();
-  if(name === 'active') renderActiveExercises();
+  if(name === 'active')   renderActiveExercises();
+  if(name === 'data')     renderQuickStats();
 }
 
 function setActiveTab(name){
@@ -303,170 +442,42 @@ function setActiveTab(name){
   if(t) t.classList.add('active');
 }
 
-/* -------------------------
-   Workouts list
-   ------------------------- */
-function renderWorkouts(){
-  const list = document.getElementById('workout-list');
-  if(workouts.length === 0){
-    list.innerHTML = `<div class="card"><div><h3 style="margin:0">Nessun workout</h3><p class="small muted" style="margin-top:6px">Crea il tuo primo template</p></div></div>`;
-    return;
+/* ── History helpers ── */
+function getMaxRepsForExercise(exName){
+  if(!exName) return null;
+  const target = exName.trim().toLowerCase();
+  let max = null;
+  for(const session of history){
+    if(!session?.exercises) continue;
+    for(const ex of session.exercises){
+      if(!ex?.name) continue;
+      if(ex.name.trim().toLowerCase() !== target) continue;
+      if(Array.isArray(ex.sets)){
+        for(const s of ex.sets){
+          if(s && typeof s.repsDone === 'number' && s.repsDone > 0){
+            if(max === null || s.repsDone > max) max = s.repsDone;
+          }
+        }
+      }
+    }
   }
-
-  list.innerHTML = workouts.map((w,i) => {
-    const exCount = w.exercises?.length || 0;
-    return `
-      <div class="card">
-        <div class="meta">
-          <h3>${escapeHtml(w.name || 'Untitled')}</h3>
-          <p class="small muted">${exCount} esercizi</p>
-        </div>
-        <div class="row">
-          <button class="btn btn-outline" onclick="showWorkoutEditor(${i})">Modifica</button>
-          <button class="btn btn-ghost" onclick="startWorkout(${i})">Inizia</button>
-          <button class="btn btn-ghost danger" onclick="deleteWorkout(${i})">Elimina</button>
-        </div>
-      </div>
-    `;
-  }).join('');
+  return max;
 }
 
-/* Delete workout template (only template; history untouched) */
-function deleteWorkout(index){
-  if(!Number.isInteger(index) || index < 0 || index >= workouts.length) return;
-  const name = workouts[index].name || 'Questo workout';
-  if(!confirm(`Eliminare il template "${name}"? La cronologia non verrà toccata.`)) return;
-  workouts.splice(index,1);
-  saveData();
-  renderWorkouts();
-}
-
-/* -------------------------
-   Editor
-   ------------------------- */
-function showWorkoutEditor(index = null){
-  editingIndex = (index === null) ? null : index;
-  document.getElementById('editor-title').innerText = index === null ? 'Nuovo workout' : 'Modifica workout';
-  showView('editor');
-  const nameInput = document.getElementById('edit-workout-name');
-  const list = document.getElementById('exercise-list');
-  list.innerHTML = '';
-
-  if(index !== null){
-    const w = workouts[index];
-    nameInput.value = w.name || '';
-    (w.exercises || []).forEach(ex => addExerciseField(ex));
-  } else {
-    nameInput.value = '';
-    addExerciseField();
-  }
-}
-
-/* Add exercise field in editor
-   data: { name, sets, reps, rest, weightTarget }
-*/
-function addExerciseField(data = { name:'', sets:3, reps:10, rest:60, weightTarget:0 }){
-  const list = document.getElementById('exercise-list');
-  const div = document.createElement('div');
-  div.className = 'field';
-  div.innerHTML = `
-    <div class="exercise-row">
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <input class="ex-name" type="text" placeholder="Nome esercizio" value="${escapeHtml(data.name)}">
-        <div style="display:flex;gap:8px;align-items:center">
-          <label class="small">Serie <input class="ex-sets" type="number" min="1" value="${data.sets}" style="width:72px;margin-left:6px"></label>
-          <label class="small">Reps target <input class="ex-reps" type="number" min="1" value="${data.reps}" style="width:72px;margin-left:6px"></label>
-          <label class="small">Recupero (s) <input class="ex-rest" type="number" min="0" value="${data.rest}" style="width:72px;margin-left:6px"></label>
-          <label class="small">Peso target (kg) <input class="ex-weight-target" type="number" min="0" value="${data.weightTarget}" style="width:90px;margin-left:6px"></label>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-        <button class="btn btn-outline" onclick="this.closest('.field').remove()">Rimuovi</button>
-        <button class="btn btn-ghost" onclick="duplicateExercise(this)">Duplica</button>
-      </div>
-    </div>
-  `;
-  list.appendChild(div);
-}
-
-function duplicateExercise(btn){
-  const field = btn.closest('.field');
-  if(!field) return;
-  const name = field.querySelector('.ex-name').value;
-  const sets = Number(field.querySelector('.ex-sets').value) || 3;
-  const reps = Number(field.querySelector('.ex-reps').value) || 10;
-  const rest = Number(field.querySelector('.ex-rest').value) || 60;
-  const weightTarget = Number(field.querySelector('.ex-weight-target').value) || 0;
-  addExerciseField({ name, sets, reps, rest, weightTarget });
-}
-
-function duplicateSelected(){
-  const list = document.getElementById('exercise-list');
-  const last = list.querySelector('.field:last-child');
-  if(!last) return addExerciseField();
-  const name = last.querySelector('.ex-name').value;
-  const sets = Number(last.querySelector('.ex-sets').value) || 3;
-  const reps = Number(last.querySelector('.ex-reps').value) || 10;
-  const rest = Number(last.querySelector('.ex-rest').value) || 60;
-  const weightTarget = Number(last.querySelector('.ex-weight-target').value) || 0;
-  addExerciseField({ name, sets, reps, rest, weightTarget });
-}
-
-/* Save workout template */
-function saveWorkout(){
-  const name = document.getElementById('edit-workout-name').value.trim() || 'Untitled';
-  const exercises = Array.from(document.querySelectorAll('#exercise-list .field')).map(f => {
-    const exName = f.querySelector('.ex-name').value.trim() || 'Esercizio';
-    const setsCount = Math.max(1, Number(f.querySelector('.ex-sets').value) || 3);
-    const repsTarget = Math.max(1, Number(f.querySelector('.ex-reps').value) || 10);
-    const rest = Math.max(0, Number(f.querySelector('.ex-rest').value) || 60);
-    const weightTarget = Math.max(0, Number(f.querySelector('.ex-weight-target').value) || 0);
-
-    return {
-      name: exName,
-      rest,
-      exercisesMeta: { weightTarget }, // meta for future
-      sets: Array.from({length: setsCount}).map(() => ({
-        weight: weightTarget || 0,
-        repsTarget,
-        repsDone: 0
-      }))
-    };
-  });
-
-  const newWorkout = { name, exercises };
-  if(editingIndex !== null && Number.isInteger(editingIndex) && editingIndex >= 0 && editingIndex < workouts.length){
-    workouts[editingIndex] = newWorkout;
-  } else {
-    workouts.push(newWorkout);
-  }
-  saveData();
-  showView('workouts');
-}
-
-/* -------------------------
-   Start / Active workout
-   ------------------------- */
-
-/* Helper: find last weight used for an exercise (case-insensitive)
-   Returns number or null
-*/
 function getLastWeightForExercise(exName){
   if(!exName) return null;
   const target = exName.trim().toLowerCase();
   for(let i = history.length - 1; i >= 0; i--){
     const session = history[i];
-    if(!session || !session.exercises) continue;
+    if(!session?.exercises) continue;
     for(let j = session.exercises.length - 1; j >= 0; j--){
       const ex = session.exercises[j];
-      if(!ex || !ex.name) continue;
-      if(ex.name.trim().toLowerCase() === target){
-        // find last non-zero weight in sets
-        if(Array.isArray(ex.sets)){
-          for(let k = ex.sets.length - 1; k >= 0; k--){
-            const s = ex.sets[k];
-            if(s && typeof s.weight === 'number' && s.weight > 0) return s.weight;
-          }
+      if(!ex?.name) continue;
+      if(ex.name.trim().toLowerCase() !== target) continue;
+      if(Array.isArray(ex.sets)){
+        for(let k = ex.sets.length - 1; k >= 0; k--){
+          const s = ex.sets[k];
+          if(s && typeof s.weight === 'number' && s.weight > 0) return s.weight;
         }
       }
     }
@@ -474,290 +485,390 @@ function getLastWeightForExercise(exName){
   return null;
 }
 
-/* Start workout: prepare currentWorkout with initial weights from history or target */
-function startWorkout(index){
-  if(!Number.isInteger(index) || index < 0 || index >= workouts.length) return;
-  // deep clone template
-  currentWorkout = JSON.parse(JSON.stringify(workouts[index]));
-  // for each exercise, determine initial weight
-  currentWorkout.exercises.forEach(ex => {
-    const last = getLastWeightForExercise(ex.name);
-    const fallback = (ex.exercisesMeta && ex.exercisesMeta.weightTarget) ? ex.exercisesMeta.weightTarget : 0;
-    const initialWeight = (last !== null) ? last : fallback;
-    ex.sets.forEach(s => {
-      s.weight = initialWeight || 0; // show last or target or 0
-      s.repsDone = 0; // start fresh
-      s.completed = false;
-    });
-  });
-
-  // set UI
-  document.getElementById('active-workout-name').innerText = currentWorkout.name || 'Allenamento';
-  document.getElementById('active-date').innerText = new Date().toLocaleString();
-  showView('active');
-  setActiveTab('workouts');
-  renderActiveExercises();
-}
-
-/* Render active workout exercises */
-function renderActiveExercises(){
-  const container = document.getElementById('active-exercises');
-  if(!currentWorkout) { container.innerHTML = '<p class="small muted">Nessun allenamento attivo</p>'; return; }
-
-  container.innerHTML = currentWorkout.exercises.map((ex, exIdx) => {
-    return `
-      <div class="exercise-card">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-weight:700">${escapeHtml(ex.name)}</div>
-            <div class="small muted">${ex.sets.length} serie • ${ex.rest}s recupero</div>
-          </div>
-          <div class="small muted">Target: ${ex.sets[0]?.repsTarget || 0} reps</div>
-        </div>
-
-        <div class="sets-list">
-          ${ex.sets.map((s, sIdx) => `
-            <div class="set-row" id="set-${exIdx}-${sIdx}">
-              <div style="display:flex;align-items:center;gap:8px">
-                <div class="small muted">Serie ${sIdx+1}</div>
-              </div>
-
-              <div class="set-controls">
-                <input type="number" class="input-sm" value="${s.weight}" onchange="updateSetWeight(${exIdx},${sIdx},this.value)" aria-label="Peso serie">
-                <input type="number" class="input-sm" value="${s.repsDone}" onchange="updateSetReps(${exIdx},${sIdx},this.value)" aria-label="Reps fatte">
-                <button class="btn ${s.completed ? 'btn-outline' : 'btn-solid'}" onclick="completeSet(${exIdx},${sIdx},${currentWorkout.exercises[exIdx].rest})" ${s.completed ? 'disabled' : ''}>${s.completed ? 'Completata' : '✓'}</button>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function updateSetWeight(exIdx, sIdx, val){
-  const n = Number(val) || 0;
-  currentWorkout.exercises[exIdx].sets[sIdx].weight = n;
-}
-
-function updateSetReps(exIdx, sIdx, val){
-  const n = Number(val) || 0;
-  currentWorkout.exercises[exIdx].sets[sIdx].repsDone = n;
-}
-
-/* Complete set: require repsDone > 0 */
-function completeSet(exIdx, sIdx, rest){
-  const set = currentWorkout.exercises[exIdx].sets[sIdx];
-  if(!set) return;
-  if(Number(set.repsDone) <= 0){
-    alert('Inserisci le ripetizioni effettive prima di completare la serie.');
+/* ── Workout list ── */
+function renderWorkouts(){
+  const list = document.getElementById('workout-list');
+  if(!workouts.length){
+    list.innerHTML = `<div class="empty-state">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="1.5" y="10" width="3" height="4" rx="1" fill="currentColor" opacity="0.5"/><rect x="1.5" y="8.5" width="3" height="7" rx="1.2" fill="currentColor"/><rect x="19.5" y="10" width="3" height="4" rx="1" fill="currentColor" opacity="0.5"/><rect x="19.5" y="8.5" width="3" height="7" rx="1.2" fill="currentColor"/><rect x="4.5" y="11" width="15" height="2" rx="1" fill="currentColor"/><rect x="6" y="9" width="3" height="6" rx="1.2" fill="currentColor"/><rect x="15" y="9" width="3" height="6" rx="1.2" fill="currentColor"/></svg>
+      <p style="margin:0;font-weight:600">Nessun workout</p>
+      <p class="small" style="margin:4px 0 0">Crea il tuo primo template con il tasto +</p>
+    </div>`;
     return;
   }
-  set.completed = true;
+  list.innerHTML = workouts.map((w,i) => `
+    <div class="card">
+      <div class="meta">
+        <h3>${escHtml(w.name||'Untitled')}</h3>
+        <p class="small muted">${w.exercises?.length||0} esercizi</p>
+      </div>
+      <div class="row">
+        <button class="btn btn-outline btn-sm" onclick="showWorkoutEditor(${i})">Modifica</button>
+        <button class="btn btn-solid btn-sm" onclick="startWorkout(${i})">Inizia</button>
+        <button class="btn btn-ghost btn-sm danger" onclick="deleteWorkout(${i})">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteWorkout(i){
+  if(!confirm(`Eliminare "${workouts[i]?.name}"?`)) return;
+  workouts.splice(i,1); saveData(); renderWorkouts();
+}
+
+/* ── Editor ── */
+function showWorkoutEditor(index=null){
+  editingIndex = index;
+  document.getElementById('editor-title').innerText = index===null ? 'Nuovo workout' : 'Modifica workout';
+  const nameInput = document.getElementById('edit-workout-name');
+  const list = document.getElementById('exercise-list');
+  list.innerHTML = '';
+  if(index !== null){
+    const w = workouts[index];
+    nameInput.value = w.name||'';
+    (w.exercises||[]).forEach(ex => addExerciseField(ex));
+  } else {
+    nameInput.value='';
+    addExerciseField();
+  }
+  showView('editor');
+}
+
+function addExerciseField(data={name:'',sets:3,reps:10,rest:60,weightTarget:0}){
+  const list = document.getElementById('exercise-list');
+  const div = document.createElement('div');
+  div.className='field';
+  div.innerHTML=`
+    <div class="exercise-row">
+      <div style="flex:1">
+        <input class="ex-name" type="text" placeholder="Nome esercizio" value="${escHtml(data.name)}" style="margin-bottom:8px">
+        <div class="ex-inputs">
+          <label>Serie<input class="ex-sets" type="number" min="1" value="${data.sets}"></label>
+          <label>Reps target<input class="ex-reps" type="number" min="1" value="${data.reps}"></label>
+          <label>Recupero (s)<input class="ex-rest" type="number" min="0" value="${data.rest}"></label>
+          <label>Peso target (kg)<input class="ex-weight-target" type="number" min="0" value="${data.weightTarget||0}"></label>
+        </div>
+      </div>
+      <div class="ex-actions">
+        <button class="btn btn-outline btn-sm" onclick="this.closest('.field').remove()">Rimuovi</button>
+        <button class="btn btn-ghost btn-sm" onclick="duplicateExercise(this)">Duplica</button>
+      </div>
+    </div>`;
+  list.appendChild(div);
+}
+
+function duplicateExercise(btn){
+  const f = btn.closest('.field');
+  addExerciseField({
+    name: f.querySelector('.ex-name').value,
+    sets: +f.querySelector('.ex-sets').value||3,
+    reps: +f.querySelector('.ex-reps').value||10,
+    rest: +f.querySelector('.ex-rest').value||60,
+    weightTarget: +f.querySelector('.ex-weight-target').value||0
+  });
+}
+function duplicateSelected(){
+  const last = document.querySelector('#exercise-list .field:last-child');
+  if(!last) return addExerciseField();
+  duplicateExercise(last.querySelector('.btn'));
+}
+
+function saveWorkout(){
+  const name = document.getElementById('edit-workout-name').value.trim()||'Untitled';
+  const exercises = Array.from(document.querySelectorAll('#exercise-list .field')).map(f=>{
+    const setsCount = Math.max(1,+f.querySelector('.ex-sets').value||3);
+    const repsTarget= Math.max(1,+f.querySelector('.ex-reps').value||10);
+    const rest      = Math.max(0,+f.querySelector('.ex-rest').value||60);
+    const wTarget   = Math.max(0,+f.querySelector('.ex-weight-target').value||0);
+    return {
+      name: f.querySelector('.ex-name').value.trim()||'Esercizio',
+      rest, exercisesMeta:{weightTarget:wTarget},
+      sets: Array.from({length:setsCount}).map(()=>({weight:wTarget,repsTarget,repsDone:0}))
+    };
+  });
+  const nw = {name,exercises};
+  if(editingIndex!==null && editingIndex>=0 && editingIndex<workouts.length){
+    workouts[editingIndex]=nw;
+  } else { workouts.push(nw); }
+  saveData(); showView('workouts');
+}
+
+/* ── Start / Active workout ── */
+function startWorkout(index){
+  if(index<0||index>=workouts.length) return;
+  currentWorkout = JSON.parse(JSON.stringify(workouts[index]));
+  currentWorkout.exercises.forEach(ex=>{
+    const lastW  = getLastWeightForExercise(ex.name);
+    const maxR   = getMaxRepsForExercise(ex.name);
+    const fallW  = ex.exercisesMeta?.weightTarget||0;
+    const fallR  = ex.sets[0]?.repsTarget||10;
+    const initW  = lastW!==null ? lastW : fallW;
+    const initR  = maxR!==null  ? maxR  : fallR;
+    ex.sets.forEach(s=>{ s.weight=initW; s.repsDone=initR; s.completed=false; });
+  });
+  document.getElementById('active-workout-name').innerText = currentWorkout.name||'Allenamento';
+  document.getElementById('active-date').innerText = new Date().toLocaleString('it-IT');
+  showView('active');
+  setActiveTab('workouts');
+}
+
+function renderActiveExercises(){
+  const container = document.getElementById('active-exercises');
+  if(!currentWorkout){ container.innerHTML='<p class="small muted">Nessun allenamento attivo</p>'; return; }
+  container.innerHTML = currentWorkout.exercises.map((ex,ei)=>`
+    <div class="exercise-card">
+      <div class="ex-card-head">
+        <div>
+          <div class="name">${escHtml(ex.name)}</div>
+          <div class="meta">${ex.sets.length} serie · ${ex.rest}s recupero · target ${ex.sets[0]?.repsTarget||0} reps</div>
+        </div>
+      </div>
+      <div class="sets-list">
+        ${ex.sets.map((s,si)=>`
+          <div class="set-row${s.completed?' done':''}" id="set-${ei}-${si}">
+            <div class="set-num">Serie ${si+1}</div>
+            <div class="set-inputs">
+              <div class="input-wrap">
+                <input type="number" class="input-set" value="${s.weight}" inputmode="decimal"
+                  onchange="updateSetWeight(${ei},${si},this.value)" aria-label="Peso">
+                <div class="set-label">kg</div>
+              </div>
+              <div class="input-wrap">
+                <input type="number" class="input-set" value="${s.repsDone}" inputmode="numeric"
+                  onchange="updateSetReps(${ei},${si},this.value)" aria-label="Reps">
+                <div class="set-label">reps</div>
+              </div>
+            </div>
+            <button class="btn-complete${s.completed?' done':''}"
+              onclick="${s.completed?'':'completeSet('+ei+','+si+','+ex.rest+')'}"
+              aria-label="${s.completed?'Completata':'Completa'}">
+              ${s.completed?'✓':'→'}
+            </button>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateSetWeight(ei,si,v){ currentWorkout.exercises[ei].sets[si].weight=+v||0; }
+function updateSetReps(ei,si,v){   currentWorkout.exercises[ei].sets[si].repsDone=+v||0; }
+
+function completeSet(ei,si,rest){
+  const s = currentWorkout.exercises[ei].sets[si];
+  if(!s) return;
+  if(+s.repsDone<=0){ alert('Inserisci le ripetizioni prima di completare la serie.'); return; }
+  s.completed=true;
   renderActiveExercises();
-  startTimer(rest);
+  if(rest>0) startTimer(rest);
 }
 
-/* Cancel active workout */
 function cancelActive(){
-  if(!confirm('Annullare l\'allenamento in corso? I progressi non salvati andranno persi.')) return;
-  currentWorkout = null;
-  showView('workouts');
+  if(!confirm('Annullare l\'allenamento in corso?')) return;
+  currentWorkout=null; showView('workouts');
 }
 
-/* Finish workout: push to history (single session) */
 function finishWorkout(){
   if(!currentWorkout) return;
-  const session = {
-    name: currentWorkout.name || 'Sessione',
+  history.push({
+    name: currentWorkout.name||'Sessione',
     date: new Date().toISOString().split('T')[0],
     time: new Date().toISOString(),
     exercises: currentWorkout.exercises
-  };
-  history.push(session);
+  });
   saveData();
-  alert('Allenamento salvato nella cronologia.');
-  currentWorkout = null;
+  currentWorkout=null;
   showView('workouts');
+  alert('Allenamento salvato!');
 }
 
-/* -------------------------
-   Timer mm:ss
-   ------------------------- */
+/* ── Timer ── */
 function startTimer(seconds){
   if(timerInterval) clearInterval(timerInterval);
-  const overlay = document.getElementById('timer-overlay');
-  const display = document.getElementById('timer-display');
-  let timeLeft = Math.max(0, Number(seconds) || 0);
-  updateTimerDisplay(timeLeft);
-  overlay.style.display = 'flex';
-
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    updateTimerDisplay(timeLeft);
-    if(timeLeft <= 0){
-      clearInterval(timerInterval);
-      timerInterval = null;
-      // small beep using WebAudio if available
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = 'sine';
-        o.frequency.value = 880;
-        g.gain.value = 0.02;
-        o.connect(g); g.connect(ctx.destination);
-        o.start();
-        setTimeout(()=>{ o.stop(); ctx.close(); }, 220);
-      } catch(e){}
-      overlay.style.display = 'none';
+  let t = Math.max(0,+seconds||0);
+  updateTimerDisplay(t);
+  document.getElementById('timer-overlay').style.display='flex';
+  timerInterval=setInterval(()=>{
+    t--;
+    updateTimerDisplay(t);
+    if(t<=0){
+      clearInterval(timerInterval); timerInterval=null;
+      document.getElementById('timer-overlay').style.display='none';
+      try{
+        const ctx=new(window.AudioContext||window.webkitAudioContext)();
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine'; o.frequency.value=880; g.gain.value=0.04;
+        o.connect(g); g.connect(ctx.destination); o.start();
+        setTimeout(()=>{o.stop();ctx.close();},250);
+      }catch(e){}
     }
-  }, 1000);
+  },1000);
 }
-
-function updateTimerDisplay(sec){
-  const m = String(Math.floor(sec/60)).padStart(2,'0');
-  const s = String(sec%60).padStart(2,'0');
-  document.getElementById('timer-display').innerText = `${m}:${s}`;
+function updateTimerDisplay(s){
+  document.getElementById('timer-display').innerText=
+    String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
 }
-
-function closeTimer(){
-  if(timerInterval) clearInterval(timerInterval);
-  timerInterval = null;
-  document.getElementById('timer-overlay').style.display = 'none';
-}
+function closeTimer(){ clearInterval(timerInterval); timerInterval=null; document.getElementById('timer-overlay').style.display='none'; }
 function skipTimer(){ closeTimer(); }
 
-/* -------------------------
-   Calendar & History
-   ------------------------- */
+/* ── Calendar ── */
 function populateCalendarSelectors(){
-  const monthSel = document.getElementById('calendar-month');
-  const yearSel = document.getElementById('calendar-year');
-  monthSel.innerHTML = Array.from({length:12}).map((_,i)=>`<option value="${i+1}">${i+1}</option>`).join('');
-  const currentYear = new Date().getFullYear();
-  yearSel.innerHTML = Array.from({length:5}).map((_,i)=>`<option value="${currentYear-2+i}">${currentYear-2+i}</option>`).join('');
-  monthSel.value = new Date().getMonth()+1;
-  yearSel.value = currentYear;
+  const ms=document.getElementById('calendar-month');
+  const ys=document.getElementById('calendar-year');
+  ms.innerHTML=Array.from({length:12},(_,i)=>`<option value="${i+1}">${['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'][i]}</option>`).join('');
+  const cy=new Date().getFullYear();
+  ys.innerHTML=Array.from({length:5},(_,i)=>`<option value="${cy-2+i}">${cy-2+i}</option>`).join('');
+  ms.value=new Date().getMonth()+1;
+  ys.value=cy;
 }
 
 function renderCalendar(){
-  const month = Number(document.getElementById('calendar-month').value);
-  const year = Number(document.getElementById('calendar-year').value);
-  const grid = document.getElementById('calendar-grid');
-  const detail = document.getElementById('history-detail');
-  grid.innerHTML = '';
-  detail.innerHTML = '';
-
-  const daysInMonth = new Date(year, month, 0).getDate();
-  for(let d=1; d<=daysInMonth; d++){
-    const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const has = history.some(h => h.date === dateStr);
-    const div = document.createElement('div');
-    div.className = 'day' + (has ? ' has' : '');
-    div.innerText = d;
-    if(has){
-      div.onclick = () => showHistoryDetail(dateStr);
-    }
+  const month=+document.getElementById('calendar-month').value;
+  const year=+document.getElementById('calendar-year').value;
+  const grid=document.getElementById('calendar-grid');
+  const detail=document.getElementById('history-detail');
+  const days=new Date(year,month,0).getDate();
+  grid.innerHTML='';
+  detail.innerHTML='';
+  for(let d=1;d<=days;d++){
+    const ds=`${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const has=history.some(h=>h.date===ds);
+    const div=document.createElement('div');
+    div.className='day'+(has?' has':'');
+    div.innerText=d;
+    if(has) div.onclick=()=>showHistoryDetail(ds);
     grid.appendChild(div);
   }
 }
 
-/* Show sessions for a date with delete button next to each session */
 function showHistoryDetail(date){
-  const sessions = history.map((h, idx) => ({...h, _idx: idx})).filter(h => h.date === date);
-  const detail = document.getElementById('history-detail');
-  detail.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">Allenamenti del ${date}</h3><button class="btn btn-outline" onclick="clearHistoryForDate('${date}')">Elimina tutti</button></div>`;
-
-  if(sessions.length === 0){
-    detail.innerHTML += `<p class="small muted">Nessuna sessione</p>`;
-    return;
-  }
-
-  sessions.forEach(s => {
-    const html = document.createElement('div');
-    html.className = 'session-card';
-    html.innerHTML = `
+  const sessions=history.map((h,i)=>({...h,_i:i})).filter(h=>h.date===date);
+  const detail=document.getElementById('history-detail');
+  detail.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="margin:0;font-size:16px">Sessioni del ${date}</h3>
+      <button class="btn btn-danger btn-sm" onclick="clearHistoryForDate('${date}')">Elimina tutti</button>
+    </div>`;
+  if(!sessions.length){ detail.innerHTML+='<p class="small muted">Nessuna sessione.</p>'; return; }
+  sessions.forEach(s=>{
+    const el=document.createElement('div');
+    el.className='session-card';
+    el.innerHTML=`
       <div class="session-head">
         <div>
-          <div style="font-weight:700">${escapeHtml(s.name)}</div>
-          <div class="small muted">${new Date(s.time || s.date).toLocaleString()}</div>
+          <div style="font-weight:700">${escHtml(s.name)}</div>
+          <div class="small muted">${new Date(s.time||s.date).toLocaleString('it-IT')}</div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button class="btn btn-outline" onclick="replaySession(${s._idx})">Riprova</button>
-          <button class="btn btn-ghost danger" onclick="deleteSession(${s._idx})">Elimina</button>
+        <div class="row">
+          <button class="btn btn-outline btn-sm" onclick="replaySession(${s._i})">Riprova</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSession(${s._i})">Elimina</button>
         </div>
       </div>
-
       <div class="divider"></div>
-
-      <div>
-        ${s.exercises.map(ex => `
-          <div style="margin-bottom:8px">
-            <div style="font-weight:600">${escapeHtml(ex.name)}</div>
-            ${ex.sets.map(set => `<div class="small muted">• ${set.weight}kg x ${set.repsDone} reps</div>`).join('')}
-          </div>
-        `).join('')}
-      </div>
-    `;
-    detail.appendChild(html);
+      ${s.exercises.map(ex=>`
+        <div style="margin-bottom:8px">
+          <div style="font-weight:600;font-size:13px">${escHtml(ex.name)}</div>
+          ${ex.sets.map(st=>`<div class="small muted">· ${st.weight}kg × ${st.repsDone} reps</div>`).join('')}
+        </div>`).join('')}`;
+    detail.appendChild(el);
   });
 }
 
-/* Delete a single session by history index */
-function deleteSession(historyIndex){
-  if(!Number.isInteger(historyIndex) || historyIndex < 0 || historyIndex >= history.length) return;
-  if(!confirm('Eliminare questa sessione dalla cronologia?')) return;
-  history.splice(historyIndex,1);
-  saveData();
-  renderCalendar();
-  // if the currently shown date is still visible, re-render detail
-  const month = Number(document.getElementById('calendar-month').value);
-  const year = Number(document.getElementById('calendar-year').value);
-  const today = new Date();
-  // attempt to refresh detail if visible
-  const detailEl = document.getElementById('history-detail');
-  if(detailEl && detailEl.innerHTML.trim() !== '') {
-    // try to extract date from header
-    const header = detailEl.querySelector('h3');
-    if(header){
-      const txt = header.innerText.replace('Allenamenti del ','').trim();
-      showHistoryDetail(txt);
-    }
-  }
+function deleteSession(i){
+  if(!confirm('Eliminare questa sessione?')) return;
+  history.splice(i,1); saveData(); renderCalendar();
+  const h=document.getElementById('history-detail');
+  const hdr=h.querySelector('h3');
+  if(hdr) showHistoryDetail(hdr.innerText.replace('Sessioni del ','').trim());
 }
 
-/* Delete all sessions for a date (helper) */
 function clearHistoryForDate(date){
   if(!confirm(`Eliminare tutte le sessioni del ${date}?`)) return;
-  history = history.filter(h => h.date !== date);
-  saveData();
-  renderCalendar();
-  document.getElementById('history-detail').innerHTML = '';
+  history=history.filter(h=>h.date!==date); saveData(); renderCalendar();
+  document.getElementById('history-detail').innerHTML='';
 }
 
-/* Replay session: start a new active workout prefilled from session */
-function replaySession(historyIndex){
-  if(!Number.isInteger(historyIndex) || historyIndex < 0 || historyIndex >= history.length) return;
-  const session = history[historyIndex];
-  // deep clone
-  currentWorkout = {
-    name: session.name + ' (Riprova)',
-    exercises: JSON.parse(JSON.stringify(session.exercises))
-  };
-  // reset repsDone to 0 but keep weights as last used
-  currentWorkout.exercises.forEach(ex => {
-    ex.sets.forEach(s => { s.repsDone = 0; s.completed = false; });
+function replaySession(i){
+  if(i<0||i>=history.length) return;
+  const s=history[i];
+  currentWorkout={name:s.name+' (Riprova)', exercises:JSON.parse(JSON.stringify(s.exercises))};
+  currentWorkout.exercises.forEach(ex=>ex.sets.forEach(st=>{st.repsDone=0;st.completed=false;}));
+  document.getElementById('active-workout-name').innerText=currentWorkout.name;
+  document.getElementById('active-date').innerText=new Date().toLocaleString('it-IT');
+  showView('active'); renderActiveExercises();
+}
+
+/* ── Data / Export / Import ── */
+function exportJSON(){
+  const blob=new Blob([JSON.stringify({workouts,history},null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`gymtrack-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+function exportCSV(){
+  const rows=[['Data','Ora','Allenamento','Esercizio','Serie','Peso (kg)','Reps']];
+  history.forEach(s=>{
+    (s.exercises||[]).forEach(ex=>{
+      (ex.sets||[]).forEach((st,si)=>{
+        rows.push([s.date, s.time?new Date(s.time).toLocaleTimeString('it-IT'):'',
+          s.name, ex.name, si+1, st.weight, st.repsDone]);
+      });
+    });
   });
-  document.getElementById('active-workout-name').innerText = currentWorkout.name;
-  document.getElementById('active-date').innerText = new Date().toLocaleString();
-  showView('active');
-  renderActiveExercises();
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`gymtrack-storia-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click(); URL.revokeObjectURL(a.href);
 }
 
-/* -------------------------
-   Init
-   ------------------------- */
+function importJSON(e){
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!data.workouts&&!data.history) throw new Error('Formato non valido');
+      const mode=confirm('Vuoi UNIRE i dati importati a quelli esistenti?\n\nOK = Unisci\nAnnulla = Sostituisci tutto');
+      if(mode){
+        if(Array.isArray(data.workouts)) workouts=[...workouts,...data.workouts];
+        if(Array.isArray(data.history))  history=[...history,...data.history];
+      } else {
+        if(Array.isArray(data.workouts)) workouts=data.workouts;
+        if(Array.isArray(data.history))  history=data.history;
+      }
+      saveData(); renderWorkouts(); renderQuickStats();
+      alert('Importazione completata!');
+    }catch(err){ alert('Errore durante l\'importazione: '+err.message); }
+    e.target.value='';
+  };
+  r.readAsText(file);
+}
+
+function clearAllData(){
+  if(!confirm('Cancellare TUTTI i dati? Questa azione è irreversibile.\n\nSi consiglia di fare prima un export JSON.')) return;
+  workouts=[]; history=[]; saveData(); renderWorkouts(); renderQuickStats();
+  alert('Dati cancellati.');
+}
+
+function renderQuickStats(){
+  const el=document.getElementById('quick-stats');
+  if(!el) return;
+  const totalSessions=history.length;
+  const totalSets=history.reduce((acc,s)=>acc+s.exercises.reduce((a,e)=>a+(e.sets?.length||0),0),0);
+  const uniqueDays=new Set(history.map(s=>s.date)).size;
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+      <div style="text-align:center"><div style="font-size:22px;font-weight:800">${totalSessions}</div><div>Sessioni</div></div>
+      <div style="text-align:center"><div style="font-size:22px;font-weight:800">${uniqueDays}</div><div>Giorni</div></div>
+      <div style="text-align:center"><div style="font-size:22px;font-weight:800">${totalSets}</div><div>Serie totali</div></div>
+    </div>`;
+}
+
+/* ── Init ── */
 function init(){
   populateCalendarSelectors();
   renderWorkouts();
@@ -766,19 +877,16 @@ function init(){
 }
 init();
 
-/* -------------------------
-   Small helpers
-   ------------------------- */
-function escapeHtml(str){
-  if(!str && str !== 0) return '';
-  return String(str).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); });
+/* ── Utils ── */
+function escHtml(s){
+  if(s===null||s===undefined) return '';
+  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
-/* Register service worker (separate file sw.js as requested) */
+/* ── Service Worker ── */
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(()=>{ /* ignore */ });
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 </script>
-
 </body>
 </html>
