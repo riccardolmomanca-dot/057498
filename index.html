@@ -538,13 +538,18 @@ function importWorkoutPlanFile(e){
   const file = e.target.files[0]; if(!file) return;
   const r = new FileReader();
   r.onload = ev => {
-    try{
-      const plan = JSON.parse(ev.target.result);
-      importWorkoutPlan(plan);
-      renderWorkouts();
-      alert(`Piano importato: ${plan.mesociclo||''}\n${workouts.filter(w=>w.fromPlan).length} giorni caricati.`);
-    }catch(err){ alert('Errore durante l\'importazione del piano: '+err.message); }
+    const text = ev.target.result;
     e.target.value='';
+    /* Ritardato per lo stesso motivo di importJSON: evitare un dialog
+       bloccante nell'istante in cui la PWA riprende il focus dal file picker. */
+    setTimeout(()=>{
+      try{
+        const plan = JSON.parse(text);
+        importWorkoutPlan(plan);
+        renderWorkouts();
+        alert(`Piano importato: ${plan.mesociclo||''}\n${workouts.filter(w=>w.fromPlan).length} giorni caricati.`);
+      }catch(err){ alert('Errore durante l\'importazione del piano: '+err.message); }
+    }, 300);
   };
   r.readAsText(file);
 }
@@ -907,23 +912,29 @@ function importJSON(e){
   const file=e.target.files[0]; if(!file) return;
   const r=new FileReader();
   r.onload=ev=>{
-    try{
-      const data=JSON.parse(ev.target.result);
-      if(!data.workouts&&!data.history) throw new Error('Formato non valido');
-      const mode=confirm('Vuoi UNIRE i dati importati a quelli esistenti?\n\nOK = Unisci\nAnnulla = Sostituisci tutto');
-      if(mode){
-        if(Array.isArray(data.workouts)) workouts=[...workouts,...data.workouts];
-        if(Array.isArray(data.history))  history=[...history,...data.history];
-        if(data.planMeta) planMeta=data.planMeta;
-      } else {
-        if(Array.isArray(data.workouts)) workouts=data.workouts;
-        if(Array.isArray(data.history))  history=data.history;
-        planMeta = data.planMeta || null;
-      }
-      saveData(); renderWorkouts(); renderQuickStats();
-      alert('Importazione completata!');
-    }catch(err){ alert('Errore durante l\'importazione: '+err.message); }
+    const text = ev.target.result;
     e.target.value='';
+    /* Il dialog (confirm/alert) va ritardato: chiamarlo subito al ritorno dal
+       file picker nativo può far chiudere le PWA installate su Android
+       (bug noto di WebView/WebAPK su resume immediato con dialog bloccante). */
+    setTimeout(()=>{
+      try{
+        const data=JSON.parse(text);
+        if(!data.workouts&&!data.history) throw new Error('Formato non valido');
+        const mode=confirm('Vuoi UNIRE i dati importati a quelli esistenti?\n\nOK = Unisci\nAnnulla = Sostituisci tutto');
+        if(mode){
+          if(Array.isArray(data.workouts)) workouts=[...workouts,...data.workouts];
+          if(Array.isArray(data.history))  history=[...history,...data.history];
+          if(data.planMeta) planMeta=data.planMeta;
+        } else {
+          if(Array.isArray(data.workouts)) workouts=data.workouts;
+          if(Array.isArray(data.history))  history=data.history;
+          planMeta = data.planMeta || null;
+        }
+        saveData(); renderWorkouts(); renderQuickStats();
+        alert('Importazione completata!');
+      }catch(err){ alert('Errore durante l\'importazione: '+err.message); }
+    }, 300);
   };
   r.readAsText(file);
 }
