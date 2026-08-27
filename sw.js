@@ -1,8 +1,8 @@
-/* GymTrack — Service Worker v3
+/* GymTrack — Service Worker v4
    Strategia: Cache First per assets locali, Network First per Google Fonts
 */
 
-const CACHE = 'gymtrack-v3';
+const CACHE = 'gymtrack-v4';
 const ASSETS = [
   './',
   './index.html',
