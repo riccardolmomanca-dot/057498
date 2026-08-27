@@ -282,6 +282,7 @@
         <p class="small muted mt8">Template salvati</p>
       </div>
     </div>
+    <div id="plan-banner"></div>
     <div class="list" id="workout-list"></div>
     <button class="fab" title="Nuovo workout" onclick="showWorkoutEditor()">+</button>
   </section>
@@ -360,6 +361,13 @@
         <input type="file" id="import-file" accept=".json" class="hidden" onchange="importJSON(event)">
       </div>
       <div class="tool-card">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M9 3v14M9 3l4 4M9 3 5 7" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="19" width="18" height="2" rx="1" fill="#111"/></svg>
+        <h4>Importa piano mesociclo</h4>
+        <p>Carica workout.plan.json: crea/aggiorna i giorni del piano corrente senza toccare lo storico allenamenti.</p>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('import-plan-file').click()">Carica piano</button>
+        <input type="file" id="import-plan-file" accept=".json" class="hidden" onchange="importWorkoutPlanFile(event)">
+      </div>
+      <div class="tool-card">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#111" stroke-width="1.8"/><path d="M3 9h18M9 9v12" stroke="#111" stroke-width="1.8" stroke-linecap="round"/></svg>
         <h4>Esporta CSV</h4>
         <p>Cronologia allenamenti in formato CSV, apribile con Excel o Google Sheets.</p>
@@ -411,6 +419,7 @@
 /* ── Data ── */
 let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
 let history  = JSON.parse(localStorage.getItem('history'))  || [];
+let planMeta = JSON.parse(localStorage.getItem('planMeta')) || null;
 let currentWorkout = null;
 let editingIndex   = null;
 let timerInterval  = null;
@@ -418,6 +427,7 @@ let timerInterval  = null;
 function saveData(){
   localStorage.setItem('workouts', JSON.stringify(workouts));
   localStorage.setItem('history',  JSON.stringify(history));
+  localStorage.setItem('planMeta', JSON.stringify(planMeta));
 }
 
 /* ── UI helpers ── */
@@ -468,8 +478,80 @@ function getLastSetForExercise(exName, setIndex){
   return null;
 }
 
+/* ── Piano mesociclo ── */
+function renderPlanBanner(){
+  const el = document.getElementById('plan-banner');
+  if(!el) return;
+  if(!planMeta){ el.innerHTML=''; return; }
+  const range = planMeta.settimana_inizio && planMeta.settimana_fine
+    ? `${planMeta.settimana_inizio} → ${planMeta.settimana_fine}` : 'nessuna data di fine pianificata';
+  el.innerHTML = `<div class="card" style="align-items:flex-start;flex-direction:column;gap:2px;margin-bottom:14px">
+    <h3 style="margin:0">${escHtml(planMeta.mesociclo||'Mesociclo attivo')}</h3>
+    <p class="small muted" style="margin:0">${escHtml(range)} · importato il ${new Date(planMeta.importedAt).toLocaleDateString('it-IT')}</p>
+  </div>`;
+}
+
+function parseRepsTarget(rips){
+  if(typeof rips !== 'string') return 10;
+  const m = rips.match(/(\d+)(?:\s*-\s*(\d+))?/);
+  if(!m) return 10;
+  return m[2] ? +m[2] : +m[1];
+}
+
+/* Crea/aggiorna i workout derivati dal piano (giorni/esercizi) senza toccare
+   lo storico né i template creati manualmente: i workout del piano precedente
+   vengono sostituiti solo tra loro (flag fromPlan), history resta intatto. */
+function importWorkoutPlan(plan){
+  if(!plan || !Array.isArray(plan.giorni)) throw new Error('Formato workout.plan.json non valido: manca "giorni"');
+  const planWorkouts = plan.giorni.map(g => ({
+    name: g.nome_giorno || 'Giorno',
+    fromPlan: true,
+    exercises: (g.esercizi||[]).map(ex => {
+      const setsCount     = Math.max(1, +ex.serie || 1);
+      const weightTarget  = typeof ex.carico_kg === 'number' ? ex.carico_kg : 0;
+      const repsTarget    = parseRepsTarget(ex.ripetizioni);
+      return {
+        name: ex.nome || 'Esercizio',
+        rest: 90,
+        exercisesMeta: {
+          weightTarget,
+          gruppoMuscolare: ex.gruppo_muscolare || '',
+          rpeTarget: typeof ex.rpe_target === 'number' ? ex.rpe_target : null,
+          note: ex.note || '',
+          ripetizioniRaw: ex.ripetizioni || ''
+        },
+        sets: Array.from({length:setsCount}).map(()=>({weight:weightTarget, repsTarget, repsDone:0}))
+      };
+    })
+  }));
+  workouts = workouts.filter(w => !w.fromPlan).concat(planWorkouts);
+  planMeta = {
+    mesociclo: plan.mesociclo || '',
+    settimana_inizio: plan.settimana_inizio ?? null,
+    settimana_fine: plan.settimana_fine ?? null,
+    importedAt: new Date().toISOString()
+  };
+  saveData();
+}
+
+function importWorkoutPlanFile(e){
+  const file = e.target.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try{
+      const plan = JSON.parse(ev.target.result);
+      importWorkoutPlan(plan);
+      renderWorkouts();
+      alert(`Piano importato: ${plan.mesociclo||''}\n${workouts.filter(w=>w.fromPlan).length} giorni caricati.`);
+    }catch(err){ alert('Errore durante l\'importazione del piano: '+err.message); }
+    e.target.value='';
+  };
+  r.readAsText(file);
+}
+
 /* ── Workout list ── */
 function renderWorkouts(){
+  renderPlanBanner();
   const list = document.getElementById('workout-list');
   if(!workouts.length){
     list.innerHTML = `<div class="empty-state">
@@ -509,7 +591,18 @@ function showWorkoutEditor(index=null){
   if(index !== null){
     const w = workouts[index];
     nameInput.value = w.name||'';
-    (w.exercises||[]).forEach(ex => addExerciseField(ex));
+    (w.exercises||[]).forEach(ex => addExerciseField({
+      name: ex.name,
+      sets: ex.sets?.length || 3,
+      reps: ex.sets?.[0]?.repsTarget || 10,
+      rest: ex.rest ?? 60,
+      weightTarget: ex.exercisesMeta?.weightTarget || 0,
+      planMeta: {
+        gruppoMuscolare: ex.exercisesMeta?.gruppoMuscolare,
+        rpeTarget: ex.exercisesMeta?.rpeTarget,
+        note: ex.exercisesMeta?.note
+      }
+    }));
   } else {
     nameInput.value='';
     addExerciseField();
@@ -521,6 +614,7 @@ function addExerciseField(data={name:'',sets:3,reps:10,rest:60,weightTarget:0}){
   const list = document.getElementById('exercise-list');
   const div = document.createElement('div');
   div.className='field';
+  div._planMeta = data.planMeta || null;
   div.innerHTML=`
     <div class="exercise-row">
       <div style="flex:1">
@@ -565,12 +659,13 @@ function saveWorkout(){
     const wTarget   = Math.max(0,+f.querySelector('.ex-weight-target').value||0);
     return {
       name: f.querySelector('.ex-name').value.trim()||'Esercizio',
-      rest, exercisesMeta:{weightTarget:wTarget},
+      rest, exercisesMeta:{weightTarget:wTarget, ...(f._planMeta||{})},
       sets: Array.from({length:setsCount}).map(()=>({weight:wTarget,repsTarget,repsDone:0}))
     };
   });
   const nw = {name,exercises};
   if(editingIndex!==null && editingIndex>=0 && editingIndex<workouts.length){
+    if(workouts[editingIndex].fromPlan) nw.fromPlan = true;
     workouts[editingIndex]=nw;
   } else { workouts.push(nw); }
   saveData(); showView('workouts');
@@ -604,7 +699,8 @@ function renderActiveExercises(){
       <div class="ex-card-head">
         <div>
           <div class="name">${escHtml(ex.name)}</div>
-          <div class="meta">${ex.sets.length} serie · ${ex.rest}s recupero · target ${ex.sets[0]?.repsTarget||0} reps</div>
+          <div class="meta">${ex.sets.length} serie · ${ex.rest}s recupero · target ${escHtml(ex.exercisesMeta?.ripetizioniRaw || ex.sets[0]?.repsTarget || 0)} reps${ex.exercisesMeta?.rpeTarget?` · RPE ${ex.exercisesMeta.rpeTarget}`:''}</div>
+          ${ex.exercisesMeta?.note?`<div class="small muted" style="margin-top:2px">${escHtml(ex.exercisesMeta.note)}</div>`:''}
         </div>
       </div>
       <div class="sets-list">
@@ -782,7 +878,7 @@ function replaySession(i){
 
 /* ── Data / Export / Import ── */
 function exportJSON(){
-  const blob=new Blob([JSON.stringify({workouts,history},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({workouts,history,planMeta},null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download=`gymtrack-backup-${new Date().toISOString().split('T')[0]}.json`;
@@ -818,9 +914,11 @@ function importJSON(e){
       if(mode){
         if(Array.isArray(data.workouts)) workouts=[...workouts,...data.workouts];
         if(Array.isArray(data.history))  history=[...history,...data.history];
+        if(data.planMeta) planMeta=data.planMeta;
       } else {
         if(Array.isArray(data.workouts)) workouts=data.workouts;
         if(Array.isArray(data.history))  history=data.history;
+        planMeta = data.planMeta || null;
       }
       saveData(); renderWorkouts(); renderQuickStats();
       alert('Importazione completata!');
@@ -832,7 +930,7 @@ function importJSON(e){
 
 function clearAllData(){
   if(!confirm('Cancellare TUTTI i dati? Questa azione è irreversibile.\n\nSi consiglia di fare prima un export JSON.')) return;
-  workouts=[]; history=[]; saveData(); renderWorkouts(); renderQuickStats();
+  workouts=[]; history=[]; planMeta=null; saveData(); renderWorkouts(); renderQuickStats();
   alert('Dati cancellati.');
 }
 
